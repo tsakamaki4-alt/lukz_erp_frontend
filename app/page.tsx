@@ -1,65 +1,109 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import Link from 'next/link';
+import { ShieldCheck, BarChart3, ArrowRight, Zap, Database, Lock, UserPlus } from 'lucide-react';
+
+export default function LandingPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-[#0f172a] text-white selection:bg-blue-500/30">
+      {/* Navigation */}
+      <nav className="flex items-center justify-between px-8 h-20 border-b border-white/5 bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="bg-blue-600 p-2 rounded-xl text-white font-bold text-sm shadow-lg shadow-blue-600/20">Lukz</div>
+          <span className="text-xl font-bold tracking-tight">ERP</span>
+        </div>
+
+        {/* Desktop Links */}
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium">
+          <a href="#features" className="text-slate-400 hover:text-white transition-colors">Features</a>
+          
+          <div className="h-4 w-[1px] bg-white/10 mx-2" />
+          
+          {/* Auth Links */}
+          <Link href="/login" className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors">
+            <Lock size={14} /> Login
+          </Link>
+          <Link href="/signup" className="bg-white text-slate-900 px-5 py-2 rounded-full font-bold hover:bg-blue-50 transition-all shadow-lg flex items-center gap-2">
+            <UserPlus size={14} /> Get Started
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-32 overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-blue-600/10 blur-[120px] rounded-full -z-10" />
+
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold mb-8">
+            <Zap size={14} /> NEXT-GEN MANUFACTURING ERP
+          </div>
+          <h1 className="text-5xl md:text-7xl font-black mb-8 tracking-tight leading-[1.1]">
+            Precision Control for <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+              Modern Factories
+            </span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+            The complete OS for manufacturing. Manage formulations, track live batches, and ensure QA compliance from a single dashboard.
           </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {/* Primary Action - Leads to Sign Up */}
+            <Link href="/signup" className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all group shadow-xl shadow-blue-600/20">
+              Create Free Account <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+            
+            {/* Secondary Action - Leads to Login */}
+            <Link href="/login" className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-2">
+              Sign In to System
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </section>
+
+      {/* Feature Grid */}
+      <section id="features" className="py-24 border-t border-white/5">
+        <div className="max-w-6xl mx-auto px-6 text-center mb-16">
+          <h2 className="text-3xl font-bold mb-4 text-white">Enterprise-Grade Features</h2>
+          <p className="text-slate-400">Everything you need to scale your manufacturing operations.</p>
+        </div>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureCard 
+              icon={<Database className="text-cyan-400" />}
+              title="Formulation Management"
+              desc="Deep-nested formula records with real-time R&D scheduling and version control."
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <FeatureCard 
+              icon={<BarChart3 className="text-blue-400" />}
+              title="Operational Insights"
+              desc="Real-time batch tracking and inventory health metrics on a high-performance dashboard."
+            />
+            <FeatureCard 
+              icon={<ShieldCheck className="text-emerald-400" />}
+              title="QA Compliance"
+              desc="Automated quality assurance logs and personnel activity tracking for total accountability."
+            />
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 border-t border-white/5 text-center text-slate-500 text-sm">
+        <p>&copy; {new Date().getFullYear()} Lukz Enterprise Resource Planning. All rights reserved.</p>
+      </footer>
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+  return (
+    <div className="p-8 rounded-3xl bg-white/5 border border-white/5 hover:border-blue-500/30 transition-all group text-left">
+      <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      <h3 className="text-xl font-bold mb-3 text-white">{title}</h3>
+      <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
     </div>
   );
 }
