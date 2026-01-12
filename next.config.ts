@@ -5,8 +5,8 @@ const nextConfig = {
     unoptimized: true,
   },
   // This matches your repository name exactly
-  //basePath: '/lukz_erp_frontend',
- // assetPrefix: '/lukz_erp_frontend',
+  basePath: '/lukz_erp_frontend',
+  assetPrefix: '/lukz_erp_frontend',
 };
 
 export default nextConfig;
