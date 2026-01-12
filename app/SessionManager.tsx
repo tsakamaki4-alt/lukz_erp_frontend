@@ -8,8 +8,8 @@ export default function SessionManager({ children }: { children: React.ReactNode
   const pathname = usePathname();
   
   // 30 Minutes (change to 10000 for a 10-second test)
-  //const INACTIVITY_LIMIT = 30 * 60 * 1000; 
-  const INACTIVITY_LIMIT = 10000; 
+  const INACTIVITY_LIMIT = 30 * 60 * 1000; 
+  //const INACTIVITY_LIMIT = 10000; 
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
