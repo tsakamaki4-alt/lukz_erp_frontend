@@ -57,7 +57,7 @@ export default function FormulasPage() {
 
   // Fetch folders on mount
   useEffect(() => {
-    fetch('https://elmeralexis1998.pythonanywhere.com/api/folders/')
+    fetch('https://tsakamaki4.pythonanywhere.com/api/folders/')
       .then(res => res.json())
       .then(data => { 
         setFolders(data); 
@@ -74,7 +74,7 @@ export default function FormulasPage() {
     setSubLoading(true); 
     setExpandedFolderId(folderId);
     try {
-      const res = await fetch(`https://elmeralexis1998.pythonanywhere.com/api/folders/${folderId}/formulas/`);
+      const res = await fetch(`https://tsakamaki4.pythonanywhere.com/api/folders/${folderId}/formulas/`);
       const data = await res.json();
       setSubFormulas(data);
     } catch (error) {

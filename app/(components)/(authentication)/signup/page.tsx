@@ -40,7 +40,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const response = await fetch('https://elmeralexis1998.pythonanywhere.com/api/register/', {
+      const response = await fetch('https://tsakamaki4.pythonanywhere.com/api/register/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -43,7 +43,7 @@ function LoginContent() {
     setIsPending(false);
 
     try {
-      const response = await fetch('https://elmeralexis1998.pythonanywhere.com/api/login/', {
+      const response = await fetch('https://tsakamaki4.pythonanywhere.com/api/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
