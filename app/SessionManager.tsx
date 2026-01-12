@@ -20,7 +20,7 @@ export default function SessionManager({ children }: { children: React.ReactNode
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     
     // 2. Redirect
-    window.location.href = '/login?reason=inactivity';
+    window.location.href = '/lukz_erp_frontend/login?reason=inactivity';
   }, []);
 
   const resetTimer = useCallback(() => {
