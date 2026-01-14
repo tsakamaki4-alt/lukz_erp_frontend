@@ -1,19 +1,16 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation'; // Added useSearchParams
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, User, ArrowRight, Eye, EyeOff, ShieldCheck, X, Clock } from 'lucide-react';
+import { Lock, User, ArrowLeft, ArrowRight, Eye, EyeOff, ShieldCheck, X, Clock } from 'lucide-react';
 
-// Next.js requires useSearchParams to be wrapped in a Suspense boundary 
-// if used in a client component that is statically rendered.
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // 1. CAPTURE THE REDIRECT PATH
-  // This looks for "?from=" in the URL. If it's not there, it defaults to "/dashboard"
   const redirectTo = searchParams.get('from') || '/dashboard';
+  const reason = searchParams.get('reason');
   
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -32,7 +29,7 @@ function LoginContent() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      router.push(redirectTo); // Use the dynamic path here too
+      router.push(redirectTo);
     }
   }, [router, redirectTo]);
 
@@ -43,13 +40,30 @@ function LoginContent() {
     setIsPending(false);
 
     try {
-      const response = await fetch('https://tsakamaki4.pythonanywhere.com/api/login/', {
+      // 1. Authenticate with your Django Backend
+      const response = await fetch('http://127.0.0.1:8000/api/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
+
+      // --- 2. START N8N MONITORING LOGIC ---
+      // We trigger this immediately after the response
+      fetch('http://localhost:5678/webhook/auth-monitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          status: response.ok ? 'SUCCESS' : (response.status === 403 ? 'PENDING' : 'FAILED'),
+          errorCode: response.status,
+          attemptTime: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          platform: navigator.platform
+        }),
+      }).catch(() => console.warn('n8n Logging Node unreachable. Check if Docker is running.'));
+      // --- END N8N MONITORING LOGIC ---
 
       if (response.ok) {
         localStorage.setItem('token', data.token);
@@ -60,7 +74,6 @@ function LoginContent() {
         
         setAuthCookie(data.token);
         
-        // 2. REDIRECT TO THE INTENDED PAGE
         router.push(redirectTo);
         router.refresh();
       } else {
@@ -82,21 +95,21 @@ function LoginContent() {
   return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6 relative selection:bg-blue-500/30 overflow-hidden">
       
-      {/* 1. FULL PAGE LOADING OVERLAY */}
+      {/* FULL PAGE LOADING OVERLAY */}
       {loading && (
         <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-[#0f172a]/80 backdrop-blur-md transition-all duration-500">
-           <div className="relative">
-              <div className="w-20 h-20 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <ShieldCheck className="text-blue-400 animate-pulse" size={28} />
-              </div>
-           </div>
-           <h3 className="mt-6 text-white font-bold tracking-widest uppercase text-sm animate-pulse">
-             Verifying Credentials
-           </h3>
-           <p className="mt-2 text-slate-500 text-[10px] font-mono tracking-widest uppercase">
-             Initializing Secure Protocol...
-           </p>
+            <div className="relative">
+               <div className="w-20 h-20 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+               <div className="absolute inset-0 flex items-center justify-center">
+                 <ShieldCheck className="text-blue-400 animate-pulse" size={28} />
+               </div>
+            </div>
+            <h3 className="mt-6 text-white font-bold tracking-widest uppercase text-sm animate-pulse">
+               Verifying Credentials
+            </h3>
+            <p className="mt-2 text-slate-500 text-[10px] font-mono tracking-widest uppercase">
+               Initializing Secure Protocol...
+            </p>
         </div>
       )}
 
@@ -135,11 +148,13 @@ function LoginContent() {
         {/* Left Side: Branding/Visual */}
         <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-blue-600 to-blue-800 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl opacity-40" />
+          
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-12">
-              <div className="bg-white p-2 rounded-xl text-blue-600 font-bold text-sm shadow-lg">Lukz</div>
+            <Link href="/" className="flex items-center gap-3 mb-12 group w-fit">
+              <div className="bg-white p-2 rounded-xl text-blue-600 font-bold text-sm shadow-lg group-hover:scale-110 transition-transform">Lukz</div>
               <span className="text-2xl font-bold tracking-tight text-white uppercase">ERP</span>
-            </div>
+            </Link>
+
             <h2 className="text-4xl font-black text-white leading-tight mb-6">
               Precision Control <br /> in Every Batch.
             </h2>
@@ -147,6 +162,7 @@ function LoginContent() {
               Login to access formulation records, R&D logs, and manufacturing analytics.
             </p>
           </div>
+
           <div className="relative z-10 flex items-center gap-3 text-blue-100/40 text-xs font-mono tracking-widest uppercase">
             <ShieldCheck size={16} className="text-blue-300" />
             <span>Secure Enterprise Login</span>
@@ -155,13 +171,29 @@ function LoginContent() {
 
         {/* Right Side: Form Area */}
         <div className="p-8 md:p-12 flex flex-col justify-center bg-[#111827]">
+          
+          <Link 
+            href="/" 
+            className="flex items-center gap-2 text-slate-500 hover:text-blue-400 text-xs font-bold uppercase tracking-widest mb-8 transition-colors group w-fit"
+          >
+            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+            Back to Home
+          </Link>
+
           <div className="mb-10">
             <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Welcome Back</h1>
             <p className="text-slate-400">Enter your system credentials below.</p>
           </div>
 
           <form className="space-y-5" onSubmit={handleLogin}>
-            {/* Error Message Display */}
+            
+            {reason === 'inactivity' && !error && (
+              <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
+                <Clock size={16} />
+                Session expired due to inactivity. Please log in again.
+              </div>
+            )}
+
             {error && (
               <div className={`border text-xs p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-1 ${
                 isPending ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
@@ -171,7 +203,6 @@ function LoginContent() {
               </div>
             )}
 
-            {/* Username Field */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Username</label>
               <div className="relative group">
@@ -187,7 +218,6 @@ function LoginContent() {
               </div>
             </div>
 
-            {/* Password Field */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
               <div className="relative group">
@@ -220,7 +250,6 @@ function LoginContent() {
               </div>
             </div>
 
-            {/* 2. DYNAMIC SUBMIT BUTTON */}
             <button 
               type="submit" 
               disabled={loading}
@@ -252,11 +281,13 @@ function LoginContent() {
   );
 }
 
-// 3. EXPORT WITH SUSPENSE
-// This is best practice in Next.js when using useSearchParams
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0f172a]" />}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, ArrowRight, ShieldCheck, Eye, EyeOff, UserCircle, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, ArrowLeft, ShieldCheck, Eye, EyeOff, UserCircle, CheckCircle2 } from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const response = await fetch('https://tsakamaki4.pythonanywhere.com/api/register/', {
+      const response = await fetch('http://127.0.0.1:8000/api/register/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -53,6 +53,7 @@ export default function SignUpPage() {
       });
 
       if (response.ok) {
+        // Redirect to login with a success flag
         router.push('/login?registered=true');
       } else {
         const data = await response.json();
@@ -72,9 +73,7 @@ export default function SignUpPage() {
       {loading && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0f172a]/80 backdrop-blur-md transition-all duration-500">
            <div className="relative">
-              {/* Outer Spin Ring */}
               <div className="w-20 h-20 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-              {/* Inner Pulse Icon */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <ShieldCheck className="text-blue-400 animate-pulse" size={28} />
               </div>
@@ -93,11 +92,14 @@ export default function SignUpPage() {
         {/* Left Side: Branding */}
         <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-blue-700 to-indigo-900 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl opacity-40" />
+          
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-12">
-              <div className="bg-white p-2 rounded-xl text-blue-600 font-bold text-sm shadow-lg">Lukz</div>
+            {/* Branding Link to Landing Page */}
+            <Link href="/" className="flex items-center gap-3 mb-12 group w-fit">
+              <div className="bg-white p-2 rounded-xl text-blue-600 font-bold text-sm shadow-lg group-hover:scale-110 transition-transform">Lukz</div>
               <span className="text-2xl font-bold tracking-tight text-white uppercase">ERP</span>
-            </div>
+            </Link>
+
             <h2 className="text-4xl font-black text-white leading-tight mb-6">
               Precision from <br /> the First Step.
             </h2>
@@ -105,6 +107,7 @@ export default function SignUpPage() {
               Create your account to join the LUKZ ERP manufacturing ecosystem.
             </p>
           </div>
+
           <div className="relative z-10 flex items-center gap-3 text-blue-100/60 text-xs font-mono tracking-widest uppercase">
             <ShieldCheck size={18} className="text-emerald-400" />
             <span>ISO 27001 Data Standards</span>
@@ -113,6 +116,16 @@ export default function SignUpPage() {
 
         {/* Right Side: Form */}
         <div className="p-8 md:p-12 flex flex-col justify-center">
+          
+          {/* Back to Home Link */}
+          <Link 
+            href="/" 
+            className="flex items-center gap-2 text-slate-500 hover:text-blue-400 text-xs font-bold uppercase tracking-widest mb-6 transition-colors group w-fit"
+          >
+            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+            Back to Home
+          </Link>
+
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Request Access</h1>
             <p className="text-slate-400">Join the system to start managing batches.</p>
@@ -120,7 +133,7 @@ export default function SignUpPage() {
 
           <form className="space-y-4" onSubmit={handleSignUp}>
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3.5 rounded-xl flex items-center gap-2 animate-bounce">
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3.5 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
                 <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
                 {error}
               </div>
@@ -176,7 +189,6 @@ export default function SignUpPage() {
               {showPassword ? 'Hide Passwords' : 'Show Passwords'}
             </button>
 
-            {/* 2. DYNAMIC SUBMIT BUTTON */}
             <button 
               type="submit" 
               disabled={loading} 
