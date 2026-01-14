@@ -41,7 +41,7 @@ export default function AIAssistant() {
       const token = localStorage.getItem('token');
 
       // 2. Fetch from PythonAnywhere instead of local Next.js route
-      const response = await fetch('http://127.0.0.1:8000/api/ai/chat/', {
+      const response = await fetch('https://tsakamaki4.pythonanywhere.com/api/ai/chat/', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

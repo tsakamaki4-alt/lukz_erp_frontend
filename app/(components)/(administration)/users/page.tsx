@@ -65,7 +65,7 @@ export default function UserManagementPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/users/', {
+      const response = await fetch('https://tsakamaki4.pythonanywhere.com/api/users/', {
         headers: { 'Authorization': `Token ${localStorage.getItem('token')}` }
       });
       const data = await response.json();
@@ -80,7 +80,7 @@ export default function UserManagementPage() {
   const toggleUserStatus = async (userId: number, currentStatus: boolean) => {
     setProcessingId(userId);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/users/${userId}/`, {
+      const response = await fetch(`https://tsakamaki4.pythonanywhere.com/api/users/${userId}/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ export default function UserManagementPage() {
     setUserToDelete(null);
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/users/${userId}/`, {
+      const response = await fetch(`https://tsakamaki4.pythonanywhere.com/api/users/${userId}/`, {
         method: 'DELETE',
         headers: { 'Authorization': `Token ${localStorage.getItem('token')}` }
       });
