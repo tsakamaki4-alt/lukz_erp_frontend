@@ -9,14 +9,18 @@ export async function apiRequest<T>(
   endpoint: string, 
   options: RequestInit = {}
 ): Promise<T> {
-  // 1. Clean the endpoint and ensure a trailing slash for Django production
-  let cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  if (!cleanEndpoint.endsWith('/')) {
-    cleanEndpoint += '/';
+  // 1. Separate the path from the query string (if any)
+  const [path, queryString] = endpoint.split('?');
+  
+  // 2. Clean the path and ensure it ends with a slash
+  let cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  if (!cleanPath.endsWith('/')) {
+    cleanPath += '/';
   }
 
-  // 2. Build the absolute URL to PythonAnywhere
-  const url = `${BASE_URL}/${cleanEndpoint}`;
+  // 3. Reconstruct the URL: BASE + PATH + / + ?QUERY
+  const finalEndpoint = queryString ? `${cleanPath}?${queryString}` : cleanPath;
+  const url = `${BASE_URL}/${finalEndpoint}`;
   
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
@@ -36,20 +40,11 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     let errorData = {};
-    try {
-      errorData = await response.json();
-    } catch (e) {
-      errorData = {};
-    }
+    try { errorData = await response.json(); } catch (e) { errorData = {}; }
     throw { status: response.status, ...errorData };
   }
 
   if (response.status === 204) return {} as T;
-
-  const contentType = response.headers.get("content-type");
-  if (!contentType || !contentType.includes("application/json")) {
-    return {} as T;
-  }
-
   return response.json();
 }
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
