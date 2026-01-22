@@ -307,7 +307,7 @@ export default function FormulasPage() {
                                           {visibleColumns.formulaClass && <td className="px-6 py-3 text-[12px] text-slate-500 truncate w-[150px]">{f.formula_class || '—'}</td>}
                                           <td className="px-6 py-3 text-right w-[120px]">
                                             {canViewFormula(f) && (
-                                              <Link href={`/formula/${f.id}`}>
+                                              <Link href={`/formula/${f.id}`} prefetch={false}>
                                                 <button className="p-1.5 hover:bg-blue-600 hover:text-white text-blue-600 rounded-md transition-all border border-transparent shadow-sm hover:shadow-md" title="View Formula">
                                                   <Eye size={16} />
                                                 </button>

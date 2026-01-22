@@ -124,7 +124,7 @@ export default function FormulaFormContent() {
         setStatuses(statusData);
 
         if (isEditMode) {
-          const data = await apiRequest<any>(`/api/formulation/formulas/${formulaId}/`);
+          const data = await apiRequest<any>(`api/formulation/formulas/${formulaId}/`);
           const loadedData = {
             formula_code: data.formula_code || '',
             trade_name: data.trade_name || '',
