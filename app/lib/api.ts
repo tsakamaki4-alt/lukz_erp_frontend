@@ -1,5 +1,9 @@
-export const BASE_URL = "https://tsakamaki4.pythonanywhere.com";
-//export const BASE_URL = "http://127.0.0.1:8000";
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ENTERPRISE API CONFIGURATION - VERCEL READY
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// Fallback to local if the environment variable isn't set
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 /**
  * Enterprise API Request Wrapper

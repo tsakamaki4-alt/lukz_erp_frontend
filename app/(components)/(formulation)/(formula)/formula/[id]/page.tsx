@@ -2,14 +2,6 @@ import React, { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import FormulaFormContent from './FormulaFormContent';
 
-/**
- * generateStaticParams is required for 'output: export' when using dynamic routes.
- * This tells Next.js to pre-render the 'new' path. 
- */
-export async function generateStaticParams() {
-  return [{ id: 'new' }];
-}
-
 export default function FormulaFormPage() {
   return (
     <Suspense fallback={

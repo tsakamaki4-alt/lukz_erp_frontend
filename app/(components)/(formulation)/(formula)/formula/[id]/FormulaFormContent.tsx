@@ -19,13 +19,8 @@ export default function FormulaFormContent() {
   const searchParams = useSearchParams();
   const [ingredients, setIngredients] = useState<any[]>([]);
   
-  /**
-   * CATCH-ALL ID EXTRACTION
-   * In [[...id]], params.id is an array (e.g., ["5"] or ["new"]).
-   */
-  const idArray = params?.id;
-  const rawId = Array.isArray(idArray) ? idArray[0] : idArray;
-  const formulaId = rawId !== 'new' && rawId ? rawId : null;
+  // VERCEL CLEANUP: Standard [id] logic (string, not array)
+  const formulaId = params?.id !== 'new' ? params?.id : null;
   const isEditMode = !!formulaId;
   
   const [activeTab, setActiveTab] = useState('general'); 
