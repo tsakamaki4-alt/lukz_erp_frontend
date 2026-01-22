@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, ArrowLeft, ShieldCheck, Eye, EyeOff, UserCircle, CheckCircle2 } from 'lucide-react';
+import { 
+  User, Mail, Lock, ArrowLeft, ShieldCheck, 
+  Eye, EyeOff, UserCircle, CheckCircle2, 
+  ArrowRight, PartyPopper 
+} from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -21,6 +25,7 @@ export default function SignUpPage() {
   // UI State
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false); // New Success State
   const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,7 +37,6 @@ export default function SignUpPage() {
     setLoading(true);
     setError('');
 
-    // Client-side Validation: Match Passwords
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match. Please re-enter.");
       setLoading(false);
@@ -40,7 +44,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const response = await fetch('https://tsakamaki4.pythonanywhere.com/api/register/', {
+      const response = await fetch('http://127.0.0.1:8000/api/auth/register/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -48,13 +52,14 @@ export default function SignUpPage() {
             last_name: formData.lastName,
             email: formData.email,
             username: formData.username,
-            password: formData.password
+            password: formData.password,
+            password_confirm: formData.confirmPassword
         }),
       });
 
       if (response.ok) {
-        // Redirect to login with a success flag
-        router.push('/login?registered=true');
+        setLoading(false);
+        setIsSuccess(true); // Trigger Success Modal
       } else {
         const data = await response.json();
         setError(data.detail || 'Registration failed. Check if username exists.');
@@ -69,21 +74,38 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6 selection:bg-blue-500/30 relative overflow-hidden">
       
-      {/* 1. FULL PAGE LOADING OVERLAY */}
+      {/* 1. SUCCESS MODAL OVERLAY */}
+      {isSuccess && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#0f172a]/90 backdrop-blur-xl animate-in fade-in duration-500">
+          <div className="max-w-md w-full bg-[#1e293b] border border-white/10 rounded-3xl p-8 shadow-2xl text-center scale-in-center transition-all">
+            <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="text-emerald-500" size={40} />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Access Granted</h2>
+            <p className="text-slate-400 text-sm leading-relaxed mb-8">
+              Your account has been successfully provisioned within the Lukz ERP system. You may now proceed to the secure login terminal.
+            </p>
+            <button 
+              onClick={() => router.push('/login?registered=true')}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 transition-all group"
+            >
+              Go to Login Terminal
+              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 2. FULL PAGE LOADING OVERLAY */}
       {loading && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0f172a]/80 backdrop-blur-md transition-all duration-500">
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0f172a]/80 backdrop-blur-md">
            <div className="relative">
               <div className="w-20 h-20 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <ShieldCheck className="text-blue-400 animate-pulse" size={28} />
               </div>
            </div>
-           <h3 className="mt-6 text-white font-bold tracking-widest uppercase text-sm animate-pulse">
-             Registering...
-           </h3>
-           <p className="mt-2 text-slate-500 text-[10px] font-mono tracking-widest uppercase">
-             Establishing Secure ISO-27001 Protocol...
-           </p>
+           <h3 className="mt-6 text-white font-bold tracking-widest uppercase text-sm">Registering...</h3>
         </div>
       )}
 
@@ -94,18 +116,12 @@ export default function SignUpPage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl opacity-40" />
           
           <div className="relative z-10">
-            {/* Branding Link to Landing Page */}
             <Link href="/" className="flex items-center gap-3 mb-12 group w-fit">
               <div className="bg-white p-2 rounded-xl text-blue-600 font-bold text-sm shadow-lg group-hover:scale-110 transition-transform">Lukz</div>
               <span className="text-2xl font-bold tracking-tight text-white uppercase">ERP</span>
             </Link>
-
-            <h2 className="text-4xl font-black text-white leading-tight mb-6">
-              Precision from <br /> the First Step.
-            </h2>
-            <p className="text-blue-100/80 text-lg leading-relaxed">
-              Create your account to join the LUKZ ERP manufacturing ecosystem.
-            </p>
+            <h2 className="text-4xl font-black text-white leading-tight mb-6">Precision from <br /> the First Step.</h2>
+            <p className="text-blue-100/80 text-lg leading-relaxed">Create your account to join the LUKZ ERP manufacturing ecosystem.</p>
           </div>
 
           <div className="relative z-10 flex items-center gap-3 text-blue-100/60 text-xs font-mono tracking-widest uppercase">
@@ -116,12 +132,7 @@ export default function SignUpPage() {
 
         {/* Right Side: Form */}
         <div className="p-8 md:p-12 flex flex-col justify-center">
-          
-          {/* Back to Home Link */}
-          <Link 
-            href="/" 
-            className="flex items-center gap-2 text-slate-500 hover:text-blue-400 text-xs font-bold uppercase tracking-widest mb-6 transition-colors group w-fit"
-          >
+          <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-blue-400 text-xs font-bold uppercase tracking-widest mb-6 transition-colors group w-fit">
             <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
             Back to Home
           </Link>
@@ -139,7 +150,6 @@ export default function SignUpPage() {
               </div>
             )}
 
-            {/* Name Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">First Name</label>
@@ -189,22 +199,9 @@ export default function SignUpPage() {
               {showPassword ? 'Hide Passwords' : 'Show Passwords'}
             </button>
 
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-600/10 mt-2 group relative overflow-hidden"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span className="animate-pulse tracking-widest text-xs">PROCESSING REGISTRATION...</span>
-                </>
-              ) : (
-                <>
-                  Complete Registration 
-                  <CheckCircle2 size={18} className="group-hover:scale-110 transition-transform" />
-                </>
-              )}
+            <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 transition-all mt-2 group relative">
+              Complete Registration 
+              <CheckCircle2 size={18} className="group-hover:scale-110 transition-transform" />
             </button>
           </form>
 

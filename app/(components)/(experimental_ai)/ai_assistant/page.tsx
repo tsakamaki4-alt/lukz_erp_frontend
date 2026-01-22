@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Zap, Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { apiRequest } from '@/app/lib/api'; // Centralized API helper
 
 export default function AIAssistant() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -37,16 +38,9 @@ export default function AIAssistant() {
     setIsLoading(true);
 
     try {
-      // 1. Get the token we saved during login
-      const token = localStorage.getItem('token');
-
-      // 2. Fetch from PythonAnywhere instead of local Next.js route
-      const response = await fetch('https://tsakamaki4.pythonanywhere.com/api/ai/chat/', {
+      // Use the centralized apiRequest to handle BASE_URL and Authorization
+      const data = await apiRequest<{ content: string }>('/api/ai/llama_chat/', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Token ${token}` : '', // Send token for security
-        },
         body: JSON.stringify({ 
           messages: [...messages, userMessage].map(m => ({
             role: m.role,
@@ -54,12 +48,6 @@ export default function AIAssistant() {
           }))
         }),
       });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      const data = await response.json();
       
       setMessages(prev => [...prev, { 
         role: 'assistant', 
@@ -70,7 +58,7 @@ export default function AIAssistant() {
       console.error("AI Fetch Error:", error);
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: "### ⚠️ System Error\nUnable to reach the AI engine on the PythonAnywhere server. Please ensure you are logged in and the server is active." 
+        content: "### ⚠️ System Error\nUnable to reach the AI engine. Please ensure you are logged in and the server is active." 
       }]);
     } finally {
       setIsLoading(false);
@@ -97,7 +85,7 @@ export default function AIAssistant() {
               <div className="bg-white/20 p-2 rounded-lg"><Sparkles size={20} /></div>
               <div>
                 <h3 className="text-sm font-bold uppercase tracking-wider">Lukz Intelligence</h3>
-                <p className="text-[10px] text-blue-100 italic">Connected to PythonAnywhere API</p>
+                <p className="text-[10px] text-blue-100 italic">Connected to Centralized API</p>
               </div>
             </div>
             <div className="hidden md:flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-full border border-white/10 text-[10px] font-bold">
@@ -123,7 +111,7 @@ export default function AIAssistant() {
                     }`}>
                       {m.role === 'assistant' ? (
                         <div className="prose prose-slate prose-sm max-w-none 
-                          prose-p:leading-relaxed prose-headings:text-slate-800 
+                          prose-p:leading-loose prose-headings:text-slate-800 
                           prose-strong:text-slate-900 prose-ul:my-2 prose-li:my-0.5">
                           <ReactMarkdown>{m.content}</ReactMarkdown>
                         </div>

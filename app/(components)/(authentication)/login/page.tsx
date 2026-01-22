@@ -20,7 +20,6 @@ function LoginContent() {
   const [error, setError] = useState('');
   const [isPending, setIsPending] = useState(false);
 
-  // Quick fill helper for testing
   const handleQuickFill = () => {
     setUsername('test');
     setPassword('test');
@@ -46,7 +45,7 @@ function LoginContent() {
     setIsPending(false);
 
     try {
-      const response = await fetch('https://tsakamaki4.pythonanywhere.com/api/login/', {
+      const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -54,12 +53,13 @@ function LoginContent() {
 
       const data = await response.json();
 
+      // n8n Webhook logging (unchanged)
       fetch('https://habilimental-aliana-fluorometric.ngrok-free.dev/webhook/auth-monitor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username,
-          status: response.ok ? 'SUCCESS' : (response.status === 403 ? 'PENDING' : 'FAILED'),
+          status: response.ok ? 'SUCCESS' : (response.status === 403 ? 'Inactive Account - Approval Needed' : 'Invalid Credentials'),
           errorCode: response.status,
           attemptTime: new Date().toISOString(),
           userAgent: navigator.userAgent,
@@ -68,11 +68,16 @@ function LoginContent() {
       }).catch(() => console.warn('n8n Logging Node unreachable.'));
 
       if (response.ok) {
+        // --- UPDATED LOGIC TO APPLY ROLES ---
         localStorage.setItem('token', data.token);
         localStorage.setItem('username', data.username || username);
         localStorage.setItem('email', data.email); 
         localStorage.setItem('is_staff', data.is_staff ? 'true' : 'false');
         localStorage.setItem('is_superuser', data.is_superuser ? 'true' : 'false');
+        
+        // This is the key: Save the whole user object containing groups and permissions
+        localStorage.setItem('user', JSON.stringify(data.user || data));
+
         setAuthCookie(data.token);
         router.push(redirectTo);
         router.refresh();
@@ -165,8 +170,6 @@ function LoginContent() {
             </div>
           </div>
 
-          {/* Spacer div to push the footer down if the content above is short, 
-              though flex justify-between is doing this, adding a mt-auto or padding ensures clear air. */}
           <div className="relative z-10 flex items-center gap-3 text-blue-100/40 text-xs font-mono tracking-widest uppercase mt-20">
             <ShieldCheck size={16} className="text-blue-300" />
             <span>Secure Enterprise Login</span>

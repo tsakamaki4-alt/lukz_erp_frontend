@@ -9,6 +9,8 @@ export default function SessionManager({ children }: { children: React.ReactNode
   const lastResetRef = useRef<number>(0);
   
   const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 Minutes
+  //const INACTIVITY_LIMIT = 10000;
+
   const THROTTLE_DELAY = 1000; 
 
   const logout = useCallback(() => {
@@ -19,7 +21,7 @@ export default function SessionManager({ children }: { children: React.ReactNode
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     
     // Use window.location for a hard reset, or router.push for SPA feel
-    window.location.href = '/login?reason=inactivity';
+    window.location.href = '/lukz_erp_frontend/login?reason=inactivity';
   }, []);
 
   const resetTimer = useCallback((sync = true) => {
