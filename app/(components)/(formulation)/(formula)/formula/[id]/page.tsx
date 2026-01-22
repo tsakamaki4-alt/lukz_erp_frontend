@@ -13,6 +13,15 @@ import FormulaInfo from './FormulaInfo';
 import FormulaIngredients from './FormulaIngredients';
 import { apiRequest } from '@/app/lib/api'; // Centralized API Wrapper
 
+/**
+ * generateStaticParams is required for 'output: export' when using dynamic routes.
+ * This tells Next.js to pre-render the 'new' path. 
+ * Note: Existing IDs will be handled by the client-side useEffect.
+ */
+export async function generateStaticParams() {
+  return [{ id: 'new' }];
+}
+
 function FormulaFormContent() {
   const router = useRouter();
   const params = useParams();
