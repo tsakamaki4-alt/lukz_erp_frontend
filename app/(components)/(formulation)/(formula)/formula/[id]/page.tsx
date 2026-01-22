@@ -10,10 +10,6 @@ export async function generateStaticParams() {
   return [{ id: 'new' }];
 }
 
-// Forces the page to be dynamic, preventing the build-time strict check
-export const dynamic = 'force-dynamic';
-export const dynamicParams = true;
-
 export default function FormulaFormPage() {
   return (
     <Suspense fallback={

@@ -19,7 +19,13 @@ export default function FormulaFormContent() {
   const searchParams = useSearchParams();
   const [ingredients, setIngredients] = useState<any[]>([]);
   
-  const formulaId = params?.id !== 'new' ? params?.id : null;
+  /**
+   * CATCH-ALL ID EXTRACTION
+   * In [[...id]], params.id is an array (e.g., ["5"] or ["new"]).
+   */
+  const idArray = params?.id;
+  const rawId = Array.isArray(idArray) ? idArray[0] : idArray;
+  const formulaId = rawId !== 'new' && rawId ? rawId : null;
   const isEditMode = !!formulaId;
   
   const [activeTab, setActiveTab] = useState('general'); 
@@ -106,13 +112,13 @@ export default function FormulaFormContent() {
           qualityData,
           statusData
         ] = await Promise.all([
-          apiRequest<any[]>('/api/formulation/folders/'),
-          apiRequest<any[]>('/api/setup/categories/'),
-          apiRequest<any[]>('/api/setup/subcategories/'),
-          apiRequest<any[]>('/api/setup/product-types/'),
-          apiRequest<any[]>('/api/setup/product-formats/'),
-          apiRequest<any[]>('/api/setup/quality-specs/'),
-          apiRequest<any[]>('/api/setup/statuses/'),
+          apiRequest<any[]>('api/formulation/folders/'),
+          apiRequest<any[]>('api/setup/categories/'),
+          apiRequest<any[]>('api/setup/subcategories/'),
+          apiRequest<any[]>('api/setup/product-types/'),
+          apiRequest<any[]>('api/setup/product-formats/'),
+          apiRequest<any[]>('api/setup/quality-specs/'),
+          apiRequest<any[]>('api/setup/statuses/'),
         ]);
 
         setFolders(folderData);
@@ -120,7 +126,7 @@ export default function FormulaFormContent() {
         setSubcategories(subCatData);
         setProductTypes(typeData);
         setProductFormats(formatData);
-        setQualitySpecs(qualitySpecs);
+        setQualitySpecs(qualityData);
         setStatuses(statusData);
 
         if (isEditMode) {
@@ -180,8 +186,8 @@ export default function FormulaFormContent() {
     };
 
     const endpoint = isEditMode 
-      ? `/api/formulation/formulas/${formulaId}/` 
-      : '/api/formulation/formulas/';
+      ? `api/formulation/formulas/${formulaId}/` 
+      : 'api/formulation/formulas/';
     
     try {
       await apiRequest(endpoint, {
