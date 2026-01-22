@@ -8,7 +8,7 @@ const nextConfig = {
  // basePath: '/lukz_erp_frontend',
   //assetPrefix: '/lukz_erp_frontend',
 
-  trailingSlash: true,
+  //trailingSlash: true,
 };
 
 export default nextConfig;
