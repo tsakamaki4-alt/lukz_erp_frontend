@@ -8,6 +8,7 @@ import {
   Wallet, Factory, UserCog, LogOut, Menu, ChevronDown,
   Wrench, Zap, UserCircle, Settings2
 } from 'lucide-react';
+import { apiRequest } from '@/app/lib/api';
 
 interface SubMenuItem {
   title: string;
@@ -72,10 +73,6 @@ export default function Sidebar({ isOpen, setIsOpen, onNavigate }: SidebarProps)
             { title: 'Packaging', path: '/packaging' }
           ]    
         },
-      //  { name: 'Sales', icon: ShoppingCart, color: 'text-emerald-400', sub: [{title: 'Sales Orders', path: '#'}, {title: 'Products', path: '#'}, {title: 'Accounts', path: '#'}] },
-      //  { name: 'CRM', icon: Users2, color: 'text-pink-400', sub: [{title: 'Contacts', path: '#'}] },
-      //  { name: 'Purchasing', icon: Wallet, color: 'text-purple-400', sub: [{title: 'Purchase Orders', path: '#'}] },
-       // { name: 'Manufacturing', icon: Factory, color: 'text-blue-400', sub: [{title: 'Manufacture Orders', path: '#'}] },
       ]
     },
     {
@@ -158,18 +155,16 @@ export default function Sidebar({ isOpen, setIsOpen, onNavigate }: SidebarProps)
   }, [pathname, isLoaded, hasPermission, router, menuGroups]);
 
   const fetchUserInfo = useCallback(async () => {
-    const token = localStorage.getItem('token') || document.cookie.match(/token=([^;]+)/)?.[1];
-    if (!token) { setIsLoaded(true); return; }
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/user-info/', {
-        headers: { 'Authorization': `Token ${token}` }
+      // Switched to centralized apiRequest wrapper
+      const data = await apiRequest<any>('/api/auth/user-info/');
+      
+      setIsAdmin(data.is_superuser);
+      setUserPermissions(data.permissions);
+      setUserData({ 
+        name: data.username, 
+        email: typeof window !== 'undefined' ? localStorage.getItem('email') || 'User' : 'User' 
       });
-      if (res.ok) {
-        const data = await res.json();
-        setIsAdmin(data.is_superuser);
-        setUserPermissions(data.permissions);
-        setUserData({ name: data.username, email: localStorage.getItem('email') || 'User' });
-      }
     } catch (err) {
       console.error("Permission sync failed:", err);
     } finally {
