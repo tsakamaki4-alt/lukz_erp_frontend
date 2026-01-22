@@ -8,6 +8,7 @@ import {
   Eye, EyeOff, UserCircle, CheckCircle2, 
   ArrowRight, PartyPopper 
 } from 'lucide-react';
+import { apiRequest } from '@/app/lib/api'; // Adjust the import path based on your file structure
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -44,30 +45,31 @@ export default function SignUpPage() {
     }
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/register/', {
+      // Use centralized apiRequest for registration
+      await apiRequest('/api/auth/register/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            email: formData.email,
-            username: formData.username,
-            password: formData.password,
-            password_confirm: formData.confirmPassword
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          username: formData.username,
+          password: formData.password,
+          password_confirm: formData.confirmPassword
         }),
       });
 
-      if (response.ok) {
-        setLoading(false);
-        setIsSuccess(true); // Trigger Success Modal
-      } else {
-        const data = await response.json();
-        setError(data.detail || 'Registration failed. Check if username exists.');
-        setLoading(false);
-      }
-    } catch (err) {
-      setError('Connection failed. Ensure your Django server is running.');
+      // If apiRequest doesn't throw, it's a success
       setLoading(false);
+      setIsSuccess(true); 
+
+    } catch (err: any) {
+      setLoading(false);
+      // Logic for handling the error object thrown by apiRequest
+      const errorMsg = err.detail || 
+                       err.username?.[0] || 
+                       err.email?.[0] || 
+                       'Registration failed. Check if username or email exists.';
+      setError(errorMsg);
     }
   };
 

@@ -69,13 +69,13 @@ export default function Sidebar({ isOpen, setIsOpen, onNavigate }: SidebarProps)
           color: 'text-amber-400',
           sub: [
             { title: 'Raw Materials', path: '/raw_materials' },
-            { title: 'Packaging', path: '#' }
+            { title: 'Packaging', path: '/packaging' }
           ]    
         },
-        { name: 'Sales', icon: ShoppingCart, color: 'text-emerald-400', sub: [{title: 'Sales Orders', path: '#'}, {title: 'Products', path: '#'}, {title: 'Accounts', path: '#'}] },
-        { name: 'CRM', icon: Users2, color: 'text-pink-400', sub: [{title: 'Contacts', path: '#'}] },
-        { name: 'Purchasing', icon: Wallet, color: 'text-purple-400', sub: [{title: 'Purchase Orders', path: '#'}] },
-        { name: 'Manufacturing', icon: Factory, color: 'text-blue-400', sub: [{title: 'Manufacture Orders', path: '#'}] },
+      //  { name: 'Sales', icon: ShoppingCart, color: 'text-emerald-400', sub: [{title: 'Sales Orders', path: '#'}, {title: 'Products', path: '#'}, {title: 'Accounts', path: '#'}] },
+      //  { name: 'CRM', icon: Users2, color: 'text-pink-400', sub: [{title: 'Contacts', path: '#'}] },
+      //  { name: 'Purchasing', icon: Wallet, color: 'text-purple-400', sub: [{title: 'Purchase Orders', path: '#'}] },
+       // { name: 'Manufacturing', icon: Factory, color: 'text-blue-400', sub: [{title: 'Manufacture Orders', path: '#'}] },
       ]
     },
     {

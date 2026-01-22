@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, User, ArrowLeft, ArrowRight, Eye, EyeOff, ShieldCheck, X, Clock, Copy } from 'lucide-react';
+import { Lock, User, ArrowLeft, ArrowRight, Eye, EyeOff, ShieldCheck, X, Clock, Copy, Search, AlertCircle, Fingerprint } from 'lucide-react';
+import { apiRequest } from '@/app/lib/api';
 
 function LoginContent() {
   const router = useRouter();
@@ -20,9 +21,31 @@ function LoginContent() {
   const [error, setError] = useState('');
   const [isPending, setIsPending] = useState(false);
 
+  // Visitor Validation Logic
+  const [visitorInput, setVisitorInput] = useState('');
+  const [isValidated, setIsValidated] = useState(false);
+  const [validationError, setValidationError] = useState(false);
+  
+  // Developer Identity Secret
+  const DEVELOPER_SECRET = "alicaway-08/17/1998"; 
+
+  const handleVerifyIdentity = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (visitorInput.toLowerCase() === DEVELOPER_SECRET.toLowerCase()) {
+      setIsValidated(true);
+      setValidationError(false);
+    } else {
+      setValidationError(true);
+      // Reset error after 2 seconds
+      setTimeout(() => setValidationError(false), 2000);
+    }
+  };
+
   const handleQuickFill = () => {
-    setUsername('test');
-    setPassword('test');
+    if (isValidated) {
+      setUsername('admin_test');
+      setPassword('12345678!');
+    }
   };
 
   const setAuthCookie = (token: string) => {
@@ -45,55 +68,61 @@ function LoginContent() {
     setIsPending(false);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+      const data = await apiRequest<any>('/api/auth/login/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
-
-      // n8n Webhook logging (unchanged)
+      // n8n Webhook logging
       fetch('https://habilimental-aliana-fluorometric.ngrok-free.dev/webhook/auth-monitor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username,
-          status: response.ok ? 'SUCCESS' : (response.status === 403 ? 'Inactive Account - Approval Needed' : 'Invalid Credentials'),
-          errorCode: response.status,
+          status: 'SUCCESS',
+          errorCode: 200,
           attemptTime: new Date().toISOString(),
           userAgent: navigator.userAgent,
           platform: navigator.platform
         }),
       }).catch(() => console.warn('n8n Logging Node unreachable.'));
 
-      if (response.ok) {
-        // --- UPDATED LOGIC TO APPLY ROLES ---
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('username', data.username || username);
-        localStorage.setItem('email', data.email); 
-        localStorage.setItem('is_staff', data.is_staff ? 'true' : 'false');
-        localStorage.setItem('is_superuser', data.is_superuser ? 'true' : 'false');
-        
-        // This is the key: Save the whole user object containing groups and permissions
-        localStorage.setItem('user', JSON.stringify(data.user || data));
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', data.username || username);
+      localStorage.setItem('email', data.email); 
+      localStorage.setItem('is_staff', data.is_staff ? 'true' : 'false');
+      localStorage.setItem('is_superuser', data.is_superuser ? 'true' : 'false');
+      localStorage.setItem('user', JSON.stringify(data.user || data));
 
-        setAuthCookie(data.token);
-        router.push(redirectTo);
-        router.refresh();
-      } else {
-        setLoading(false);
-        if (response.status === 403) {
-          setIsPending(true);
-          setError("Account Pending: A supervisor must approve your access.");
-        } else {
-          const msg = data.non_field_errors?.[0] || data.detail || 'Access Denied: Invalid credentials.';
-          setError(msg);
-        }
-      }
-    } catch (err) {
+      setAuthCookie(data.token);
+      router.push(redirectTo);
+      router.refresh();
+
+    } catch (err: any) {
       setLoading(false);
-      setError('Connection failed. Ensure your Django server is running.');
+
+      fetch('https://habilimental-aliana-fluorometric.ngrok-free.dev/webhook/auth-monitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          status: err.status === 403 ? 'Inactive Account - Approval Needed' : 'Invalid Credentials',
+          errorCode: err.status || 500,
+          attemptTime: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          platform: navigator.platform
+        }),
+      }).catch(() => console.warn('n8n Logging Node unreachable.'));
+
+      if (err.status === 403) {
+        setIsPending(true);
+        setError("Account Pending: A supervisor must approve your access.");
+      } else if (err.status === 401 || err.status === 400) {
+        const msg = err.non_field_errors?.[0] || err.detail || 'Access Denied: Invalid credentials.';
+        setError(msg);
+      } else {
+        setError('Connection failed. Ensure your Django server is running.');
+      }
     }
   };
 
@@ -146,27 +175,63 @@ function LoginContent() {
             <h2 className="text-4xl font-black text-white leading-tight mb-6">Precision Control <br /> in Every Batch.</h2>
             <p className="text-blue-100/80 text-lg leading-relaxed mb-10">Login to access formulation records, R&D logs, and manufacturing analytics.</p>
 
-            <div 
-              onClick={handleQuickFill}
-              className="cursor-pointer bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 inline-block transition-all hover:bg-white/15 hover:border-white/30 group/card"
-            >
-              <div className="flex items-center gap-2 mb-4 text-blue-200 text-[10px] font-bold uppercase tracking-[0.2em]">
-                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                Demo Credentials (Click to Autofill)
-              </div>
-              <div className="space-y-3 font-mono text-sm">
-                <div className="flex items-center justify-between gap-12">
-                  <span className="text-blue-200/60 text-xs uppercase tracking-tighter">Username</span>
-                  <span className="text-white font-bold">test</span>
+            {/* Restricted Visitor Access Area */}
+            <div className="relative min-h-[160px]">
+              {!isValidated ? (
+                <div className="bg-slate-950/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 transition-all shadow-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 text-slate-300 text-[10px] font-bold uppercase tracking-[0.2em]">
+                      <Fingerprint className="w-3 h-3 text-blue-400" /> Identity Verification
+                    </div>
+                    {validationError && (
+                      <div className="flex items-center gap-1 text-red-400 text-[9px] font-black uppercase animate-bounce">
+                        <AlertCircle className="w-3 h-3" /> Access Denied
+                      </div>
+                    )}
+                  </div>
+                  <form onSubmit={handleVerifyIdentity} className="space-y-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                      <input 
+                        type="text"
+                        value={visitorInput}
+                        onChange={(e) => setVisitorInput(e.target.value)}
+                        placeholder="Format: lastname-mm/dd/yyyy"
+                        className={`w-full bg-white/5 border ${validationError ? 'border-red-500/50 ring-1 ring-red-500/20' : 'border-white/10'} rounded-xl py-3 pl-9 pr-4 text-white text-xs font-mono outline-none focus:ring-1 focus:ring-blue-400/50 transition-all placeholder:text-white`}
+                      />
+                    </div>
+                    <button type="submit" className="hidden">Verify</button>
+                    <p className="text-[9px] text-blue-200/40 uppercase font-black tracking-tighter">Enter developer surname & birthdate to unlock system keys</p>
+                    <p className="text-[9px] text-blue-200/40 uppercase font-black tracking-tighter text-center">AND HIT Enter</p>
+
+                  </form>
                 </div>
-                <div className="flex items-center justify-between gap-12">
-                  <span className="text-blue-200/60 text-xs uppercase tracking-tighter">Password</span>
-                  <span className="text-white font-bold">test</span>
+              ) : (
+                <div 
+                  onClick={handleQuickFill}
+                  className="cursor-pointer bg-emerald-500/10 backdrop-blur-md border border-emerald-500/30 rounded-2xl p-6 w-full transition-all hover:bg-emerald-500/20 group/card animate-in flip-in-x duration-700 shadow-[0_0_30px_rgba(16,185,129,0.1)]"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+                      <ShieldCheck className="w-3 h-3" /> Admin Keys Unlocked
+                    </div>
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                  </div>
+                  <div className="space-y-3 font-mono text-sm">
+                    <div className="flex items-center justify-between gap-12 border-b border-emerald-500/10 pb-2">
+                      <span className="text-emerald-500/60 text-[10px] uppercase tracking-tighter font-bold">System ID</span>
+                      <span className="text-white font-black tracking-wider uppercase">admin_test</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-12">
+                      <span className="text-emerald-500/60 text-[10px] uppercase tracking-tighter font-bold">Secret</span>
+                      <span className="text-white font-black tracking-wider uppercase">*********</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-emerald-500/10 flex items-center gap-2 text-emerald-400/50 text-[10px] uppercase font-black group-hover/card:text-emerald-300 transition-colors">
+                    <Copy size={12} /> Click to Inject Credentials
+                  </div>
                 </div>
-              </div>
-              <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2 text-blue-200/50 text-[10px] uppercase font-bold group-hover/card:text-blue-200 transition-colors">
-                <Copy size={12} /> Click Card to Quick-Fill Form
-              </div>
+              )}
             </div>
           </div>
 
@@ -183,14 +248,14 @@ function LoginContent() {
           </Link>
 
           <div className="mb-10">
-            <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Welcome Back</h1>
-            <p className="text-slate-400">Enter your system credentials below.</p>
+            <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">System Access</h1>
+            <p className="text-slate-400">Authorized personnel only. Logs are recorded.</p>
           </div>
 
           <form className="space-y-5" onSubmit={handleLogin}>
             {reason === 'inactivity' && !error && (
               <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
-                <Clock size={16} /> Session expired due to inactivity. Please log in again.
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" /> Session expired due to inactivity.
               </div>
             )}
 
@@ -205,7 +270,7 @@ function LoginContent() {
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Username</label>
               <div className="relative group">
                 <User className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${username ? 'text-blue-500' : 'text-slate-500'}`} size={18} />
-                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="System username" required className="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-slate-600" />
+                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" required className="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-slate-600" />
               </div>
             </div>
 
@@ -216,15 +281,15 @@ function LoginContent() {
                 <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required className="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-3.5 pl-12 pr-12 text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-slate-600" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors p-1">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
-              <div className="flex justify-end px-1"><button type="button" onClick={() => setIsModalOpen(true)} className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors">Forgot password?</button></div>
+              <div className="flex justify-end px-1"><button type="button" onClick={() => setIsModalOpen(true)} className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors">Request Access Reset</button></div>
             </div>
 
             <button disabled={loading} type="submit" className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-600/10 mt-6 group relative overflow-hidden">
-              {loading ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /><span className="animate-pulse tracking-widest text-xs">SYNCHRONIZING...</span></> : <>Sign In to System <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>}
+              {loading ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /><span className="animate-pulse tracking-widest text-xs">ESTABLISHING CONNECTION...</span></> : <>Authenticate <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>}
             </button>
           </form>
 
-          <p className="text-center mt-10 text-slate-500 text-sm">Need system access? <Link href="/signup" className="text-blue-400 font-bold hover:underline underline-offset-4">Request Credentials</Link></p>
+          <p className="text-center mt-10 text-slate-500 text-sm">Need a system profile? <Link href="/signup" className="text-blue-400 font-bold hover:underline underline-offset-4">Register Account</Link></p>
         </div>
       </div>
     </div>
