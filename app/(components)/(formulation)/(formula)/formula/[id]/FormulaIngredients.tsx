@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { 
-  Plus, Trash2, Check, Maximize2, X, Calculator, RefreshCw, AlertCircle, Save 
+  Plus, Trash2, Check, Maximize2, X, Calculator, RefreshCw, AlertCircle, Save,
+  List, PieChart, Activity
 } from 'lucide-react';
 import { apiRequest } from '@/app/lib/api';
 
@@ -46,6 +47,7 @@ const GridContent = ({
   pendingIngredients,
   pendingResults
 }: any) => {
+  const [mobileTab, setMobileTab] = useState<'ingredients' | 'summary' | 'results'>('ingredients');
   const safeIngredients = Array.isArray(ingredients) ? ingredients : [];
   const safeResults = Array.isArray(results) ? results : [];
 
@@ -74,17 +76,39 @@ const GridContent = ({
             </div>
           ) : (
             <div className="flex items-center gap-1">
-              <Check className="w-3 h-3 text-green-700" />
               <span className="text-[9px] font-bold text-green-700 uppercase">Ready</span>
+              <Check className="w-3 h-3 text-green-700" />
             </div>
           )}
         </div>
       </div>
 
+      {/* Mobile Tab Navigation */}
+      <div className="flex lg:hidden bg-slate-300 p-1 gap-1 border border-slate-400">
+        <button type="button"
+          onClick={() => setMobileTab('ingredients')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded text-[10px] font-bold uppercase transition-all ${mobileTab === 'ingredients' ? 'bg-blue-600 text-white shadow-inner' : 'bg-slate-200 text-slate-600'}`}
+        >
+          <List className="w-3.5 h-3.5" /> Ingredients
+        </button>
+        <button  type="button"
+          onClick={() => setMobileTab('summary')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded text-[10px] font-bold uppercase transition-all ${mobileTab === 'summary' ? 'bg-orange-600 text-white shadow-inner' : 'bg-slate-200 text-slate-600'}`}
+        >
+          <PieChart className="w-3.5 h-3.5" /> Summary
+        </button>
+        <button type="button"
+          onClick={() => setMobileTab('results')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded text-[10px] font-bold uppercase transition-all ${mobileTab === 'results' ? 'bg-slate-700 text-white shadow-inner' : 'bg-slate-200 text-slate-600'}`}
+        >
+          <Activity className="w-3.5 h-3.5" /> Results
+        </button>
+      </div>
+
       <div className="flex-1 flex flex-col lg:flex-row gap-1 overflow-hidden">
         
-        {/* Ingredients Table */}
-        <div className="flex-[2] flex flex-col bg-white border border-slate-400 overflow-hidden min-h-[300px]">
+        {/* Ingredients Table Container */}
+        <div className={`flex-[2] flex flex-col bg-white border border-slate-400 overflow-hidden min-h-[300px] ${mobileTab !== 'ingredients' ? 'hidden lg:flex' : 'flex'}`}>
           <div className="flex-1 overflow-auto relative">
             <table className="w-full border-collapse min-w-[1000px]">
               <thead>
@@ -285,7 +309,7 @@ const GridContent = ({
             
             {/* Static Bottom Reminder */}
             {!isDataLocked && (
-              <div className="flex items-center gap-1.5 px-2 bg-white/20 rounded border border-white/30 mr-2">
+              <div className="hidden md:flex items-center gap-1.5 px-2 bg-white/20 rounded border border-white/30 mr-2">
                 <Save className="w-2.5 h-2.5 text-white" />
                 <span className="text-[8px] font-bold text-white uppercase">
                   Click Save Icons Above Tables to Commit Changes
@@ -293,38 +317,25 @@ const GridContent = ({
               </div>
             )}
           </div>
-          <div className="h-32 md:h-40 overflow-auto bg-white">
-            <table className="w-full text-[10px] border-collapse min-w-[800px]">
-              <thead className="bg-[#E5E7EB] sticky top-0 border-b border-slate-300">
-                <tr className="text-slate-700 font-bold uppercase">
-                  <th className="p-1 border-r border-slate-300 text-left pl-2">Item Code</th>
-                  <th className="p-1 border-r border-slate-300 text-left pl-2">Description</th>
-                  <th className="p-1 border-r border-slate-300 text-right pr-2 w-20">% Weight</th>
-                  <th className="p-1 border-r border-slate-300 text-left pl-2">Chemical Name</th>
-                  <th className="p-1 border-r border-slate-300 text-left pl-2">CAS/EINECS/TSN</th>
-                  <th className="p-1 border-r border-slate-300 text-left pl-2 w-24">Sub Class</th>
-                  <th className="p-1 w-10 text-center">Is View</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                  {safeIngredients.filter((i: any) => (i.line_type === '1' || i.line_type === 1) && i.code).map((item: any, idx: number) => (
-                    <tr key={idx} className="hover:bg-orange-50/50">
-                      <td className="p-1 pl-2 text-blue-600 font-mono underline">{item.code}</td>
-                      <td className="p-1 pl-2 font-bold uppercase">{item.comment}</td>
-                      <td className="p-1 pr-2 text-right font-mono font-bold text-orange-700">{Number(item.qty).toFixed(4)}</td>
-                      <td className="p-1_pl-2 italic">-</td>
-                      <td className="p-1 pl-2 text-slate-500">-</td>
-                      <td className="p-1 pl-2">-</td>
-                      <td className="p-1 text-center"><input type="checkbox" readOnly className="w-3 h-3" /></td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+          
+          {/* Desktop Summary View (Visible only in desktop) */}
+          <div className="hidden lg:block h-32 md:h-40 overflow-auto bg-white">
+            <SummaryTable safeIngredients={safeIngredients} />
           </div>
         </div>
 
+        {/* Mobile Summary Container */}
+        <div className={`flex-[2] flex flex-col bg-white border border-slate-400 overflow-hidden min-h-[300px] lg:hidden ${mobileTab !== 'summary' ? 'hidden' : 'flex'}`}>
+            <div className="bg-[#FB923C] text-white p-2 text-center text-[10px] font-black uppercase tracking-widest">
+              Top Level Raw Material Summary
+            </div>
+            <div className="flex-1 overflow-auto bg-white">
+                <SummaryTable safeIngredients={safeIngredients} />
+            </div>
+        </div>
+
         {/* Calculation Results Table */}
-        <div className="flex-none lg:w-[320px] flex flex-col bg-[#D1D5DB] border border-slate-400">
+        <div className={`flex-none lg:w-[320px] flex flex-col bg-[#D1D5DB] border border-slate-400 ${mobileTab !== 'results' ? 'hidden lg:flex' : 'flex'}`}>
           <div className="bg-[#B0B5BC] border-b border-slate-400 p-2 text-center text-[11px] font-bold text-slate-800 uppercase tracking-tight">
             Calculation Results
           </div>
@@ -458,6 +469,38 @@ const GridContent = ({
     </div>
   );
 };
+
+/**
+ * Reusable Summary Table Component
+ */
+const SummaryTable = ({ safeIngredients }: { safeIngredients: any[] }) => (
+  <table className="w-full text-[10px] border-collapse min-w-[800px]">
+    <thead className="bg-[#E5E7EB] sticky top-0 border-b border-slate-300">
+      <tr className="text-slate-700 font-bold uppercase">
+        <th className="p-1 border-r border-slate-300 text-left pl-2">Item Code</th>
+        <th className="p-1 border-r border-slate-300 text-left pl-2">Description</th>
+        <th className="p-1 border-r border-slate-300 text-right pr-2 w-20">% Weight</th>
+        <th className="p-1 border-r border-slate-300 text-left pl-2">Chemical Name</th>
+        <th className="p-1 border-r border-slate-300 text-left pl-2">CAS/EINECS/TSN</th>
+        <th className="p-1 border-r border-slate-300 text-left pl-2 w-24">Sub Class</th>
+        <th className="p-1 w-10 text-center">Is View</th>
+      </tr>
+    </thead>
+    <tbody className="divide-y divide-slate-100">
+        {safeIngredients.filter((i: any) => (i.line_type === '1' || i.line_type === 1) && i.code).map((item: any, idx: number) => (
+          <tr key={idx} className="hover:bg-orange-50/50">
+            <td className="p-1 pl-2 text-blue-600 font-mono underline">{item.code}</td>
+            <td className="p-1 pl-2 font-bold uppercase">{item.comment}</td>
+            <td className="p-1 pr-2 text-right font-mono font-bold text-orange-700">{Number(item.qty).toFixed(4)}</td>
+            <td className="p-1 pl-2 italic">-</td>
+            <td className="p-1 pl-2 text-slate-500">-</td>
+            <td className="p-1 pl-2">-</td>
+            <td className="p-1 text-center"><input type="checkbox" readOnly className="w-3 h-3" /></td>
+          </tr>
+        ))}
+    </tbody>
+  </table>
+);
 
 export default function FormulaIngredients({ ingredients = [], setIngredients, isDataLocked, formData }: any) {
   const [results, setResults] = useState<any[]>([]);

@@ -46,10 +46,10 @@ export default function PropertiesTab({
   }, [selectedPart.specific_gravity, setSelectedPart, selectedPart.display_density, precision]);
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 pb-10">
       <div className="space-y-4">
-        {/* Specific Gravity Row */}
-        <div className="flex items-center gap-4">
+        {/* Specific Gravity Row - Enhanced for Mobile */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
           <div className="flex flex-1 items-center border border-slate-300 rounded overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
             <label className="px-4 py-2 bg-slate-50 border-r border-slate-300 text-[11px] font-black text-slate-700 uppercase min-w-[140px]">
               Specific Gravity
@@ -61,7 +61,7 @@ export default function PropertiesTab({
               value={selectedPart.specific_gravity ?? ''}
               onChange={handleInputChange}
               placeholder="1.0000"
-              className="flex-1 px-3 py-2 text-xs font-bold text-slate-900 outline-none bg-white"
+              className="flex-1 px-3 py-2 text-xs font-bold text-slate-900 outline-none bg-white min-w-0"
             />
           </div>
           
@@ -71,11 +71,11 @@ export default function PropertiesTab({
               name="display_density"
               readOnly
               value={selectedPart.display_density ?? ''}
-              className="flex-1 px-3 py-2 text-xs bg-transparent outline-none font-bold text-blue-600 cursor-default"
+              className="flex-1 px-3 py-2 text-xs bg-transparent outline-none font-bold text-blue-600 cursor-default min-w-0"
             />
-            <div className="px-4 py-2 bg-white border-l border-slate-300 text-[11px] font-black text-slate-700 uppercase flex items-center gap-2">
+            <div className="px-4 py-2 bg-white border-l border-slate-300 text-[11px] font-black text-slate-700 uppercase flex items-center gap-2 whitespace-nowrap">
               lbs/gal
-              <div className="group-hover:block hidden absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-[9px] font-medium rounded shadow-xl">
+              <div className="group-hover:block hidden absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-[9px] font-medium rounded shadow-xl z-10">
                 Calculated: SG × 8.345404 
                 <br/> Precision: {precision} decimals
               </div>
@@ -84,21 +84,21 @@ export default function PropertiesTab({
           </div>
         </div>
 
-        {/* Recommended Use Level Row */}
-        <div className="flex items-center border border-slate-300 rounded overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-          <label className="px-4 py-2 bg-slate-50 border-r border-slate-300 text-[11px] font-black text-slate-700 uppercase min-w-[140px]">
+        {/* Recommended Use Level Row - Enhanced for Mobile */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center border border-slate-300 rounded overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+          <label className="px-4 py-2 bg-slate-50 border-b md:border-b-0 md:border-r border-slate-300 text-[11px] font-black text-slate-700 uppercase md:min-w-[140px]">
             Recommended Use Level
           </label>
-          <div className="flex flex-1 items-center bg-white">
+          <div className="flex flex-1 items-center bg-white divide-x divide-slate-300">
             <input 
               type="text" 
               name="product_class" 
               value={selectedPart.product_class || ''}
               onChange={handleInputChange}
               placeholder="min %"
-              className="flex-1 px-3 py-2 text-xs font-bold text-slate-900 outline-none"
+              className="flex-1 px-3 py-2 text-xs font-bold text-slate-900 outline-none min-w-0"
             />
-            <div className="px-10 py-2 bg-slate-50 border-x border-slate-300 text-[11px] font-black text-slate-400 uppercase">
+            <div className="px-6 md:px-10 py-2 bg-slate-50 text-[11px] font-black text-slate-400 uppercase text-center">
               to
             </div>
             <input 
@@ -107,7 +107,7 @@ export default function PropertiesTab({
               value={selectedPart.subclass || ''}
               onChange={handleInputChange}
               placeholder="max %"
-              className="flex-1 px-3 py-2 text-xs font-bold text-slate-900 outline-none"
+              className="flex-1 px-3 py-2 text-xs font-bold text-slate-900 outline-none min-w-0"
             />
           </div>
         </div>
@@ -129,7 +129,7 @@ export default function PropertiesTab({
             <span className="text-[11px] font-black text-[#1d63d2] uppercase tracking-[0.15em] flex items-center gap-2">
               Certificate of Analysis
             </span>
-            <span className="text-[9px] font-bold text-blue-400 uppercase italic opacity-60">
+            <span className="hidden sm:inline text-[9px] font-bold text-blue-400 uppercase italic opacity-60">
               ({showCOA ? 'Click to hide' : 'Click to expand records'})
             </span>
           </div>
@@ -142,7 +142,7 @@ export default function PropertiesTab({
         {showCOA && (
           <div className="animate-in fade-in slide-in-from-top-1 duration-200">
             {/* TOOLBAR INSIDE COA SECTION */}
-            <div className="flex items-center gap-2 p-3 bg-slate-50 border-b border-slate-200">
+            <div className="flex flex-wrap items-center gap-2 p-3 bg-slate-50 border-b border-slate-200">
               <button 
                 type="button" 
                 className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-sm"
@@ -155,7 +155,7 @@ export default function PropertiesTab({
               >
                 <RefreshCw size={12} strokeWidth={3} className="text-blue-500" /> Update
               </button>
-              <div className="h-4 w-[1px] bg-slate-300 mx-1" />
+              <div className="h-4 w-[1px] bg-slate-300 mx-1 hidden sm:block" />
               <button 
                 type="button" 
                 className="flex items-center gap-2 px-3 py-1.5 bg-white text-rose-600 border border-slate-300 rounded text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 hover:border-rose-200 transition-all active:scale-95 shadow-sm"
@@ -164,8 +164,8 @@ export default function PropertiesTab({
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[500px]">
                 <thead className="bg-slate-50 border-b border-slate-300">
                   <tr>
                     <th className="px-6 py-4 border-r border-slate-200 text-[10px] font-black text-slate-600 uppercase tracking-tighter">Vendor Name</th>

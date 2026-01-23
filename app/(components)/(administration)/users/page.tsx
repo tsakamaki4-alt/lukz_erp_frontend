@@ -134,19 +134,30 @@ export default function UserManagementPage() {
           setIsSidebarOpen={setIsSidebarOpen} 
         />
 
-        <div className="p-8 w-full flex-1 flex flex-col space-y-6">
+        <div className="p-4 md:p-8 w-full flex-1 flex flex-col space-y-6">
           
           {/* Action & Filter Bar */}
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row items-center gap-4">
-             <div className="flex items-center gap-3 w-full lg:w-auto">
-                <div className="relative" ref={menuRef}>
-                  <button onClick={() => setShowColumnMenu(!showColumnMenu)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:border-slate-400 transition-all">
-                    <Filter size={16} /> <span>Columns</span> <ChevronDown size={14} className={showColumnMenu ? 'rotate-180 transition-transform' : ''} />
+             <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+                <div className="relative w-full sm:w-auto" ref={menuRef}>
+                  <button 
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); setShowColumnMenu(!showColumnMenu); }} 
+                    className="w-full flex items-center justify-between sm:justify-start gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:border-slate-400 transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Filter size={16} /> <span>Columns</span>
+                    </div>
+                    <ChevronDown size={14} className={showColumnMenu ? 'rotate-180 transition-transform' : ''} />
                   </button>
                   {showColumnMenu && (
                     <div className="absolute top-full left-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-2">
                       {Object.entries(visibleColumns).map(([key, val]) => (
-                        <div key={key} onClick={() => setVisibleColumns(prev => ({...prev, [key as keyof typeof visibleColumns]: !val}))} className="flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 rounded-xl text-sm cursor-pointer capitalize font-medium text-slate-600">
+                        <div 
+                          key={key} 
+                          onClick={() => setVisibleColumns(prev => ({...prev, [key as keyof typeof visibleColumns]: !val}))} 
+                          className="flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 rounded-xl text-sm cursor-pointer capitalize font-medium text-slate-600"
+                        >
                           <span>{key}</span> {val && <Check size={14} className="text-slate-900" strokeWidth={2.5} />}
                         </div>
                       ))}
@@ -154,8 +165,12 @@ export default function UserManagementPage() {
                   )}
                 </div>
 
-                <div className="relative">
-                  <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))} className="pl-4 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm bg-white font-medium appearance-none outline-none focus:ring-2 focus:ring-slate-900/5 transition-all cursor-pointer min-w-[180px]">
+                <div className="relative w-full sm:w-auto">
+                  <select 
+                    value={roleFilter} 
+                    onChange={(e) => setRoleFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))} 
+                    className="w-full pl-4 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm bg-white font-medium appearance-none outline-none focus:ring-2 focus:ring-slate-900/5 transition-all cursor-pointer min-w-[180px]"
+                  >
                     <option value="all">Security Groups</option>
                     {availableGroups.map(group => (<option key={group.id} value={group.id}>{group.name}</option>))}
                   </select>
@@ -165,14 +180,20 @@ export default function UserManagementPage() {
 
              <div className="flex-1 relative w-full group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={18} />
-                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Filter directory by identity, email or role..." className="w-full pl-12 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:bg-white focus:border-slate-300 transition-all" />
+                <input 
+                  type="text" 
+                  value={searchTerm} 
+                  onChange={(e) => setSearchTerm(e.target.value)} 
+                  placeholder="Filter directory by identity, email or role..." 
+                  className="w-full pl-12 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:bg-white focus:border-slate-300 transition-all" 
+                />
              </div>
           </div>
 
           {/* Directory Table Wrapper */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden w-full flex-1">
             <div className="overflow-x-auto w-full h-full">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
                     <th className="px-8 py-5">System Identity</th>
@@ -241,7 +262,8 @@ export default function UserManagementPage() {
                               <>
                                 {hasAccess('change_user') && (
                                   <button 
-                                    onClick={() => setUserToEdit(user)} 
+                                    type="button"
+                                    onClick={(e) => { e.preventDefault(); setUserToEdit(user); }} 
                                     className="p-2.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all active:scale-90"
                                     title="Edit User"
                                   >
@@ -250,7 +272,8 @@ export default function UserManagementPage() {
                                 )}
                                 {hasAccess('delete_user') && (
                                   <button 
-                                    onClick={() => setUserToDelete({ id: user.id, username: user.username })} 
+                                    type="button"
+                                    onClick={(e) => { e.preventDefault(); setUserToDelete({ id: user.id, username: user.username }); }} 
                                     className="p-2.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all active:scale-90"
                                     title="Delete User"
                                   >

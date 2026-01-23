@@ -148,7 +148,7 @@ export default function GeneralTab({
         </div>
       </div>
 
-      {/* Function Multi-Select Dropdown */}
+      {/* Function Multi-Select Dropdown - Enhanced Scroll Support */}
       <div className="space-y-1.5 relative" ref={dropdownRef}>
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Function</label>
         <div 
@@ -156,7 +156,7 @@ export default function GeneralTab({
           className={`w-full min-h-[46px] px-2 py-2 bg-white border border-slate-200 rounded-lg flex flex-wrap gap-2 items-center relative transition-colors ${isLoadingOptions ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-slate-300'}`}
         >
           {selectedPart.functions?.map((func) => (
-            <div key={func} className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 border border-slate-200 rounded text-xs text-slate-800 font-medium">
+            <div key={func} className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 border border-slate-200 rounded text-xs text-slate-800 font-medium whitespace-nowrap">
               <button 
                 onClick={(e) => { e.stopPropagation(); removeFunction(func); }} 
                 className="hover:text-red-500 transition-colors"
@@ -171,7 +171,7 @@ export default function GeneralTab({
               {isLoadingOptions ? 'Loading functions...' : 'Select functions...'}
             </span>
           )}
-          <div className="absolute right-3 flex items-center gap-2">
+          <div className="absolute right-3 flex items-center gap-2 bg-white/80 pl-2">
             {isLoadingOptions ? (
               <Loader2 size={14} className="animate-spin text-slate-400" />
             ) : (
@@ -193,7 +193,7 @@ export default function GeneralTab({
         {isFunctionDropdownOpen && (
           <div className="absolute z-[100] w-full bottom-full mb-1 bg-white border border-slate-200 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
             {functionsOptions.map((option) => {
-              const val = option.functions; // Field from /api/setup/functions
+              const val = option.functions;
               return (
                 <div 
                   key={option.id}

@@ -14,7 +14,7 @@ import VendorTab from "./VendorTab";
 
 import { 
   Briefcase, Save, RotateCcw, Search, 
-  Database, Loader2, Plus, X, CheckCircle2, AlertCircle, Circle
+  Database, Loader2, Plus, X, CheckCircle2, AlertCircle, Circle, ArrowLeft
 } from 'lucide-react';
 
 // --- Centralized API Client Import ---
@@ -99,7 +99,6 @@ export default function RawMaterialsPage() {
 
   const allTabs = ['General', 'Costing', 'Properties', 'Technical Specs', 'Vendor'];
 
-  // Requirement: Only show General tab during creation
   const visibleTabs = useMemo(() => {
     if (selectedPart && !selectedPart.id) {
       return ['General'];
@@ -155,6 +154,10 @@ export default function RawMaterialsPage() {
     setActiveTab('General');
   };
 
+  const handleBackToList = () => {
+    setSelectedPart(null);
+  };
+
   const handleRevert = () => {
     if (originalSnapshot) {
       setSelectedPart({ ...originalSnapshot });
@@ -183,14 +186,11 @@ export default function RawMaterialsPage() {
     setIsSaving(true);
     setErrorMessage(null);
     
-    // DATA SANITIZATION LAYER
     const payload = {
       ...selectedPart,
-      // Fix for Decimals
       decimals: (selectedPart.decimals === '' || selectedPart.decimals === null || selectedPart.decimals === undefined) 
                 ? 4 
                 : Number(selectedPart.decimals),
-      // Fix for cost_date: If empty string, send null to prevent Django DateField format error
       cost_date: (selectedPart.cost_date === '' || !selectedPart.cost_date) 
                  ? null 
                  : selectedPart.cost_date
@@ -244,11 +244,16 @@ export default function RawMaterialsPage() {
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
         <Navbar title="Enterprise Asset Management" Icon={Briefcase} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-        <div className="p-4 flex-1 flex flex-col min-h-0">
+        
+        <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
-            <div className="w-full lg:w-[280px] flex-shrink-0 flex flex-col min-h-0">
+            
+            {/* LEFT SIDE: Part Master List 
+                Logic: Added h-full and flex-col to parent to force child overflow.
+            */}
+            <div className={`w-full lg:w-[280px] flex-shrink-0 flex-col h-full min-h-0 ${selectedPart ? 'hidden lg:flex' : 'flex'}`}>
               <div className="flex flex-col h-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-3 border-b border-slate-100 flex flex-col gap-2">
+                <div className="p-3 border-b border-slate-100 flex flex-col gap-2 flex-shrink-0">
                   <button 
                     onClick={handleAddNew}
                     className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20"
@@ -261,7 +266,9 @@ export default function RawMaterialsPage() {
                     <input type="text" placeholder="Query Part Master..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all" />
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                
+                {/* THIS DIV NOW HANDLES THE SCROLLING */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
                   {filteredMaterials.map((material) => (
                     <button key={material.id} onClick={() => handleSelectPart(material)} className={`w-full text-left px-4 py-4 border-b border-slate-50 transition-all ${selectedPart?.id === material.id ? "bg-blue-50/50 border-r-4 border-blue-600" : "hover:bg-slate-50 border-r-4 border-transparent"}`}>
                       <div className="text-[10px] font-black text-blue-600 uppercase mb-1">{material.part_num}</div>
@@ -272,13 +279,21 @@ export default function RawMaterialsPage() {
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col min-w-0">
+            {/* RIGHT SIDE: Editor View */}
+            <div id="editor-view" className={`flex-1 flex-col min-w-0 h-full ${selectedPart ? 'flex' : 'hidden lg:flex'}`}>
               <div className="flex flex-col h-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
                 {selectedPart ? (
                   <>
-                    <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white flex-shrink-0">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20">
+                        <button 
+                          onClick={handleBackToList}
+                          className="lg:hidden p-2 -ml-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600"
+                        >
+                          <ArrowLeft size={20} strokeWidth={3} />
+                        </button>
+                        
+                        <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20 hidden sm:flex">
                           <Database size={20} className="text-white" />
                         </div>
                         <div>
@@ -288,14 +303,11 @@ export default function RawMaterialsPage() {
                           </p>
                         </div>
                       </div>
-                      <button onClick={handleAddNew} className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-md text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors shadow-sm">
-                        <Plus size={14} /> Add New
-                      </button>
                     </div>
 
-                    <div className="flex px-6 border-b border-slate-100 overflow-x-auto bg-white">
+                    <div className="flex px-6 border-b border-slate-100 overflow-x-auto bg-white flex-shrink-0 no-scrollbar">
                       {visibleTabs.map((tab) => (
-                        <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 ${activeTab === tab ? "border-blue-600 text-blue-600" : "border-transparent text-slate-400"}`}>
+                        <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === tab ? "border-blue-600 text-blue-600" : "border-transparent text-slate-400"}`}>
                           {tab}
                           {isDirty && <Circle size={6} className="fill-amber-400 text-amber-400 animate-pulse" />}
                         </button>
@@ -306,17 +318,17 @@ export default function RawMaterialsPage() {
                       {renderActiveTab()}
                     </div>
 
-                    <div className="px-6 py-4 bg-slate-50 border-t flex justify-between items-center">
+                    <div className="px-6 py-4 bg-slate-50 border-t flex flex-col sm:flex-row justify-between items-center gap-4 flex-shrink-0">
                       <div className="flex items-center gap-2">
                         <span className={`text-[10px] font-black uppercase tracking-tight ${isDirty ? 'text-amber-600' : 'text-slate-400 italic'}`}>
                           {isDirty ? '● Unsaved Changes Detected' : '* State Synchronized'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-6">
-                        <button onClick={handleRevert} className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${isDirty ? 'text-rose-600 hover:scale-105' : 'text-slate-300 cursor-not-allowed'}`} disabled={!isDirty}>
-                          <RotateCcw size={14} /> Revert Changes
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <button onClick={handleRevert} className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all rounded-lg border ${isDirty ? 'text-rose-600 border-rose-100 bg-rose-50 hover:bg-rose-100' : 'text-slate-300 border-slate-100 cursor-not-allowed'}`} disabled={!isDirty}>
+                          <RotateCcw size={14} /> Revert
                         </button>
-                        <button onClick={handleSave} disabled={isSaving || !isDirty} className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 shadow-md transition-all disabled:opacity-40">
+                        <button onClick={handleSave} disabled={isSaving || !isDirty} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 shadow-md transition-all disabled:opacity-40">
                           {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                           {selectedPart.id ? 'Commit Update' : 'Create Record'}
                         </button>
@@ -348,7 +360,7 @@ export default function RawMaterialsPage() {
                           <>
                             <div className="h-16 w-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4 mx-auto"><AlertCircle size={32} /></div>
                             <h3 className="text-lg font-black text-slate-800 uppercase">Sync Failed</h3>
-                            <pre className="mt-2 text-[10px] text-rose-500 bg-slate-50 p-3 rounded">{errorMessage}</pre>
+                            <pre className="mt-2 text-[10px] text-rose-500 bg-slate-50 p-3 rounded text-left overflow-x-auto">{errorMessage}</pre>
                           </>
                         )}
                         <button onClick={() => setSubmissionStatus('idle')} className="mt-8 w-full py-3 bg-slate-900 text-white text-[10px] font-black uppercase rounded-lg">Dismiss Notification</button>
@@ -361,6 +373,11 @@ export default function RawMaterialsPage() {
         </div>
         <Footer />
       </main>
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+      `}</style>
     </div>
   );
 }

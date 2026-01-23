@@ -62,78 +62,69 @@ function LoginContent() {
   }, [router, redirectTo]);
 
   const handleLogin = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setLoading(true);
-      setError('');
-      setIsPending(false);
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setIsPending(false);
 
-      try {
-        // 1. Authenticate with Django
-        const data = await apiRequest<any>('/api/auth/login/', {
-          method: 'POST',
-          body: JSON.stringify({ username, password }),
-        });
+    try {
+      const data = await apiRequest<any>('/api/auth/login/', {
+        method: 'POST',
+        body: JSON.stringify({ username, password }),
+      });
 
-        // 2. Extract Location/Device from the Backend Response
-        const place = data.location_context?.place || 'Location Unknown';
-        const device = data.location_context?.device || navigator.platform;
+      // n8n Webhook logging
+      fetch('https://habilimental-aliana-fluorometric.ngrok-free.dev/webhook/auth-monitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          status: 'SUCCESS',
+          errorCode: 200,
+          attemptTime: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          platform: navigator.platform
+        }),
+      }).catch(() => console.warn('n8n Logging Node unreachable.'));
 
-        // 3. n8n Webhook logging (Now including the PLACE from Backend)
-        fetch('https://habilimental-aliana-fluorometric.ngrok-free.dev/webhook/auth-monitor', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username,
-            status: 'SUCCESS',
-            errorCode: 200,
-            attemptTime: new Date().toISOString(),
-            userAgent: navigator.userAgent,
-            platform: device, // Using the cleaner device name from Django
-            place: place      // This is the "Place" you were looking for!
-          }),
-        }).catch(() => console.warn('n8n Logging Node unreachable.'));
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', data.username || username);
+      localStorage.setItem('email', data.email); 
+      localStorage.setItem('is_staff', data.is_staff ? 'true' : 'false');
+      localStorage.setItem('is_superuser', data.is_superuser ? 'true' : 'false');
+      localStorage.setItem('user', JSON.stringify(data.user || data));
 
-        // 4. Save to LocalStorage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('username', data.username || username);
-        localStorage.setItem('email', data.email); 
-        localStorage.setItem('is_staff', data.is_staff ? 'true' : 'false');
-        localStorage.setItem('is_superuser', data.is_superuser ? 'true' : 'false');
-        localStorage.setItem('user', JSON.stringify(data.user || data));
+      setAuthCookie(data.token);
+      router.push(redirectTo);
+      router.refresh();
 
-        setAuthCookie(data.token);
-        router.push(redirectTo);
-        router.refresh();
+    } catch (err: any) {
+      setLoading(false);
 
-      } catch (err: any) {
-        setLoading(false);
+      fetch('https://habilimental-aliana-fluorometric.ngrok-free.dev/webhook/auth-monitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          status: err.status === 403 ? 'Inactive Account - Approval Needed' : 'Invalid Credentials',
+          errorCode: err.status || 500,
+          attemptTime: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          platform: navigator.platform
+        }),
+      }).catch(() => console.warn('n8n Logging Node unreachable.'));
 
-        // Log Failures to n8n
-        fetch('https://habilimental-aliana-fluorometric.ngrok-free.dev/webhook/auth-monitor', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username,
-            status: err.status === 403 ? 'Inactive Account - Approval Needed' : 'Invalid Credentials',
-            errorCode: err.status || 500,
-            attemptTime: new Date().toISOString(),
-            userAgent: navigator.userAgent,
-            platform: navigator.platform,
-            place: "Authentication Blocked" 
-          }),
-        }).catch(() => console.warn('n8n Logging Node unreachable.'));
-
-        if (err.status === 403) {
-          setIsPending(true);
-          setError("Account Pending: A supervisor must approve your access.");
-        } else if (err.status === 401 || err.status === 400) {
-          const msg = err.non_field_errors?.[0] || err.detail || 'Access Denied: Invalid credentials.';
-          setError(msg);
-        } else {
-          setError('Connection failed. Ensure your Django server is running.');
-        }
+      if (err.status === 403) {
+        setIsPending(true);
+        setError("Account Pending: A supervisor must approve your access.");
+      } else if (err.status === 401 || err.status === 400) {
+        const msg = err.non_field_errors?.[0] || err.detail || 'Access Denied: Invalid credentials.';
+        setError(msg);
+      } else {
+        setError('Connection failed. Ensure your Django server is running.');
       }
-    };
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6 relative selection:bg-blue-500/30 overflow-hidden text-slate-200">

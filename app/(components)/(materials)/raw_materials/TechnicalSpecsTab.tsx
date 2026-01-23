@@ -133,6 +133,7 @@ function SearchableDropdown({
         </div>
       );
     }
+    // FIX: Ensure value is not null for display
     return <span className="font-black text-[13px] truncate uppercase">{(!Array.isArray(value) && value) || placeholder}</span>;
   };
 
@@ -157,7 +158,7 @@ function SearchableDropdown({
               autoFocus
               className="w-full bg-transparent outline-none text-[12px] font-bold text-slate-700 p-1"
               placeholder={searchPlaceholder}
-              value={searchTerm}
+              value={searchTerm ?? ''} 
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
@@ -275,7 +276,7 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
       min_range: 0,
       max_range: 0,
       associated_inci: '',
-      functions: [], // Initialized as array for multi-select JSONField
+      functions: [], 
       uom: '%',
       is_allergen: type === 'allergens',
       is_impurities: type === 'impurities',
@@ -288,7 +289,6 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
     setCasRecords(prev => prev.map(rec => {
       if (rec.id !== id) return rec;
 
-      // Handle multi-select toggle for functions
       if (field === 'functions') {
         const currentFunctions = Array.isArray(rec.functions) ? rec.functions : [];
         const newFunctions = currentFunctions.includes(value)
@@ -367,69 +367,73 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
         )}
 
         <div className="border border-slate-300 rounded-xl shadow-xl bg-white overflow-visible">
-          <table className="w-full text-left border-collapse table-fixed overflow-visible">
-            <thead className="bg-[#e2e8f0] border-b-2 border-slate-300">
-              <tr>
-                <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase">Ingredient</th>
-                <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase">CAS Num</th>
-                <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase text-center">
-                  {id === 'inci' ? 'Functions' : 'Associated INCI'}
-                </th>
-                {id === 'inci' && isAssumedActive && <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase text-center bg-blue-100/50">Range (%)</th>}
-                <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase text-center">Concentration</th>
-                <th className="w-20 px-6 py-5"></th>
-              </tr>
-            </thead>
-            <tbody className="text-[12px] font-bold divide-y divide-slate-100 overflow-visible">
-              {targetList.map((record, idx) => (
-                <tr key={record.id || idx} className="border-l-[6px] border-l-blue-600 hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-3 border-r border-slate-100 bg-slate-50/10 truncate">{record.cas_description || <span className="text-slate-300 italic">Select CAS...</span>}</td>
-                  <td className="relative p-0 border-r border-slate-100 overflow-visible">
-                    <SearchableDropdown 
-                      value={record.cas_num}
-                      options={casMasterList.map(c => ({ label: c.cas_num, subLabel: c.description, value: c.cas_num }))}
-                      onSelect={(val) => handleCasSelect(record.id!, val)}
-                    />
-                  </td>
-                  <td className="relative p-0 border-r border-slate-100 overflow-visible text-center">
-                    {id === 'inci' ? (
-                      <SearchableDropdown 
-                        multiSelect
-                        value={record.functions}
-                        options={functionMasterList.map(f => ({ label: f.functions, value: f.functions }))}
-                        onSelect={(val) => handleUpdateRecord(record.id!, 'functions', val)}
-                        placeholder="Select Functions..."
-                      />
-                    ) : (
-                      <SearchableDropdown 
-                        value={record.associated_inci}
-                        options={inciOptions}
-                        onSelect={(val) => handleUpdateRecord(record.id!, 'associated_inci', val)}
-                        placeholder="Select INCI..."
-                      />
-                    )}
-                  </td>
-                  {id === 'inci' && isAssumedActive && (
-                    <td className="px-4 py-3 border-r border-slate-100 text-center bg-blue-50/30">
-                      <div className="flex items-center gap-1">
-                        <input className="w-1/2 bg-transparent text-center font-mono text-blue-700" value={record.min_range} onChange={(e) => handleUpdateRecord(record.id!, 'min_range', e.target.value)} />
-                        <span className="text-blue-300">-</span>
-                        <input className="w-1/2 bg-transparent text-center font-mono text-blue-700" value={record.max_range} onChange={(e) => handleUpdateRecord(record.id!, 'max_range', e.target.value)} />
-                      </div>
-                    </td>
-                  )}
-                  <td className="px-4 py-3 border-r border-slate-100 text-center">
-                    <input type="number" step="0.0001" className="w-full bg-transparent text-center font-black text-blue-800" value={record.cas_weight} onChange={(e) => handleUpdateRecord(record.id!, 'cas_weight', e.target.value)} />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <button onClick={() => handleRemoveRecord(record.id!)} className="p-2 rounded bg-red-500 text-white shadow-sm active:scale-95"><Trash2 size={14} /></button>
-                  </td>
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left border-collapse table-fixed min-w-[800px]">
+              <thead className="bg-[#e2e8f0] border-b-2 border-slate-300">
+                <tr>
+                  <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase">Ingredient</th>
+                  <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase">CAS Num</th>
+                  <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase text-center">
+                    {id === 'inci' ? 'Functions' : 'Associated INCI'}
+                  </th>
+                  {id === 'inci' && isAssumedActive && <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase text-center bg-blue-100/50">Range (%)</th>}
+                  <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase text-center">Concentration</th>
+                  <th className="w-20 px-6 py-5"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="text-[12px] font-bold divide-y divide-slate-100">
+                {targetList.map((record, idx) => (
+                  <tr key={record.id || idx} className="border-l-[6px] border-l-blue-600 hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-3 border-r border-slate-100 bg-slate-50/10 truncate">
+                      {record.cas_description || <span className="text-slate-300 italic">Select CAS...</span>}
+                    </td>
+                    <td className="relative p-0 border-r border-slate-100 overflow-visible">
+                      <SearchableDropdown 
+                        value={record.cas_num ?? ''}
+                        options={casMasterList.map(c => ({ label: c.cas_num ?? '', subLabel: c.description ?? '', value: c.cas_num ?? '' }))}
+                        onSelect={(val) => handleCasSelect(record.id!, val)}
+                      />
+                    </td>
+                    <td className="relative p-0 border-r border-slate-100 overflow-visible text-center">
+                      {id === 'inci' ? (
+                        <SearchableDropdown 
+                          multiSelect
+                          value={record.functions ?? []}
+                          options={functionMasterList.map(f => ({ label: f.functions ?? '', value: f.functions ?? '' }))}
+                          onSelect={(val) => handleUpdateRecord(record.id!, 'functions', val)}
+                          placeholder="Select Functions..."
+                        />
+                      ) : (
+                        <SearchableDropdown 
+                          value={record.associated_inci ?? ''}
+                          options={inciOptions}
+                          onSelect={(val) => handleUpdateRecord(record.id!, 'associated_inci', val)}
+                          placeholder="Select INCI..."
+                        />
+                      )}
+                    </td>
+                    {id === 'inci' && isAssumedActive && (
+                      <td className="px-4 py-3 border-r border-slate-100 text-center bg-blue-50/30">
+                        <div className="flex items-center gap-1">
+                          <input className="w-1/2 bg-transparent text-center font-mono text-blue-700 outline-none" value={record.min_range ?? ''} onChange={(e) => handleUpdateRecord(record.id!, 'min_range', e.target.value)} />
+                          <span className="text-blue-300">-</span>
+                          <input className="w-1/2 bg-transparent text-center font-mono text-blue-700 outline-none" value={record.max_range ?? ''} onChange={(e) => handleUpdateRecord(record.id!, 'max_range', e.target.value)} />
+                        </div>
+                      </td>
+                    )}
+                    <td className="px-4 py-3 border-r border-slate-100 text-center">
+                      <input type="number" step="0.0001" className="w-full bg-transparent text-center font-black text-blue-800 outline-none" value={record.cas_weight ?? ''} onChange={(e) => handleUpdateRecord(record.id!, 'cas_weight', e.target.value)} />
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => handleRemoveRecord(record.id!)} className="p-2 rounded bg-red-500 text-white shadow-sm active:scale-95 transition-transform"><Trash2 size={14} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <button onClick={() => handleAddRecord(id as any)} className="flex items-center gap-3 text-[#1a3a6c] text-[12px] font-black uppercase px-6 py-3.5 rounded-lg border-2 border-[#1a3a6c]/10 bg-white shadow-md active:scale-95">
+        <button onClick={() => handleAddRecord(id as any)} className="flex items-center gap-3 text-[#1a3a6c] text-[12px] font-black uppercase px-6 py-3.5 rounded-lg border-2 border-[#1a3a6c]/10 bg-white shadow-md active:scale-95 transition-all">
           <Plus size={18} strokeWidth={4} /> Add {titles[id]}
         </button>
       </div>
@@ -440,16 +444,16 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center mb-6">
-        <button onClick={handleSaveAll} className={`px-6 py-3 rounded-xl font-black text-[12px] text-white uppercase tracking-widest shadow-lg ${saveStatus === 'success' ? 'bg-emerald-500' : 'bg-blue-600'}`}>
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mb-6">
+        <button onClick={handleSaveAll} className={`px-6 py-3 rounded-xl font-black text-[12px] text-white uppercase tracking-widest shadow-lg transition-all active:scale-95 ${saveStatus === 'success' ? 'bg-emerald-500' : 'bg-blue-600'}`}>
           {isSaving ? <Loader2 className="animate-spin" /> : <Save size={18} className="inline mr-2" />}
           {isSaving ? 'Syncing...' : 'Save Specifications'}
         </button>
         <button 
           onClick={() => setIsFullScreen(!isFullScreen)} 
-          className="bg-slate-800 text-white px-5 py-3 rounded-xl font-black uppercase text-[11px] shadow-md hover:opacity-90 transition-opacity"
+          className="bg-slate-800 text-white px-5 py-3 rounded-xl font-black uppercase text-[11px] shadow-md hover:opacity-90 transition-opacity flex items-center justify-center"
         >
-          <Maximize2 size={16} className="inline mr-2" /> Open Full Screen
+          <Maximize2 size={16} className="mr-2" /> Open Full Screen
         </button>
       </div>
 
@@ -466,23 +470,27 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
 
       {isFullScreen && (
         <div className="fixed inset-0 z-[9999] bg-slate-100 overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b border-slate-300 px-8 py-5 flex justify-between items-center shadow-md z-[10000]">
-            <h2 className="text-[#1a3a6c] text-xl font-black uppercase tracking-widest">Technical Specifications</h2>
-            <div className="flex items-center gap-4">
+          <div className="sticky top-0 bg-white border-b border-slate-300 px-4 md:px-8 py-5 flex justify-between items-center shadow-md z-[10000]">
+            <h2 className="text-[#1a3a6c] text-lg md:text-xl font-black uppercase tracking-widest">Technical Specifications</h2>
+            <div className="flex items-center gap-2 md:gap-4">
               <button 
                 onClick={handleSaveAll} 
-                className={`px-6 py-3 rounded-xl font-black text-[12px] text-white uppercase tracking-widest shadow-lg transition-all active:scale-95 ${saveStatus === 'success' ? 'bg-emerald-500' : 'bg-blue-600'}`}
+                className={`px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-black text-[10px] md:text-[12px] text-white uppercase tracking-widest shadow-lg transition-all active:scale-95 ${saveStatus === 'success' ? 'bg-emerald-500' : 'bg-blue-600'}`}
               >
                 {isSaving ? <Loader2 className="animate-spin" /> : <Save size={18} className="inline mr-2" />}
                 {isSaving ? 'Syncing...' : 'Save Specifications'}
               </button>
-              <button onClick={() => setIsFullScreen(false)} className="bg-red-500 text-white px-5 py-3 rounded-xl font-black text-xs uppercase shadow-lg hover:bg-red-600 transition-colors active:scale-95">
+              <button onClick={() => setIsFullScreen(false)} className="bg-red-500 text-white p-2.5 md:p-3 rounded-xl font-black text-xs uppercase shadow-lg hover:bg-red-600 transition-colors active:scale-95">
                 <X size={20} />
               </button>
             </div>
           </div>
-          <div className="max-w-[1920px] mx-auto p-12 space-y-10">
-            {items.map((id) => <SortableSection key={`fs-${id}`} id={id} title={titles[id]} hideDragHandle>{renderSectionContent(id)}</SortableSection>)}
+          <div className="max-w-[1920px] mx-auto p-4 md:p-12 space-y-10 pb-32">
+            {items.map((id) => (
+              <SortableSection key={`fs-${id}`} id={id} title={titles[id]} hideDragHandle>
+                {renderSectionContent(id)}
+              </SortableSection>
+            ))}
           </div>
         </div>
       )}

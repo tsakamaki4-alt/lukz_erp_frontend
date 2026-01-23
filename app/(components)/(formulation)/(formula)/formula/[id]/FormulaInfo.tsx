@@ -113,14 +113,14 @@ export default function FormulaInfo({
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 flex flex-col h-full min-h-0 space-y-6">
       
       {/* 1. HEADER ACTION BAR */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/80 p-4 rounded-xl border border-slate-100 gap-4 flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="p-2.5 bg-white rounded-lg shadow-sm border border-slate-200 text-blue-600">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/80 p-3 md:p-4 rounded-xl border border-slate-100 gap-4 flex-shrink-0">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="p-2 md:p-2.5 bg-white rounded-lg shadow-sm border border-slate-200 text-blue-600">
             <Settings size={20} />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-800 tracking-tight">General Specifications</h2>
-            <p className="text-xs text-slate-500 font-medium">Core formula parameters and documentation</p>
+            <h2 className="text-sm md:text-base font-bold text-slate-800 tracking-tight">General Specifications</h2>
+            <p className="hidden md:block text-xs text-slate-500 font-medium">Core formula parameters and documentation</p>
           </div>
         </div>
 
@@ -140,7 +140,7 @@ export default function FormulaInfo({
             <button
               type="submit"
               disabled={isSubmitting || success}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all shadow-md active:scale-95 ${
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all shadow-md active:scale-95 ${
                 success ? 'bg-emerald-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
             >
@@ -152,13 +152,13 @@ export default function FormulaInfo({
       </div>
 
       {/* 2. MAIN FORM CONTENT */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 min-h-0 overflow-hidden relative">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 flex-1 min-h-0 overflow-visible lg:overflow-hidden relative">
         
         {/* LEFT COLUMN */}
-        <div className="lg:col-span-5 space-y-6 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+        <div className="lg:col-span-5 space-y-6 overflow-y-visible lg:overflow-y-auto pr-0 lg:pr-2 scrollbar-thin scrollbar-thumb-slate-200">
           <div className="space-y-4">
             
-            {/* FORMULA CODE - MOVED TO TOP */}
+            {/* FORMULA CODE */}
             <div className="pt-2">
               <label className={refinedLabel}>Formula Code</label>
               <input
@@ -170,7 +170,7 @@ export default function FormulaInfo({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* MASTER FOLDER */}
               <div>
                 <label className={refinedLabel}>Master Folder</label>
@@ -187,7 +187,7 @@ export default function FormulaInfo({
                       <option key={f.id} value={f.id}>{f.name}</option>
                     ))}
                   </select>
-                  <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none" />
+                  <ChevronDown size={14} className="absolute right-3 top-3.5 text-slate-400 pointer-events-none" />
                 </div>
               </div>
               {/* STATUS */}
@@ -207,7 +207,7 @@ export default function FormulaInfo({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none" />
+                  <ChevronDown size={14} className="absolute right-3 top-3.5 text-slate-400 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -223,7 +223,6 @@ export default function FormulaInfo({
               />
             </div>
 
-            {/* DESCRIPTION FIELD */}
             <div>
               <label className={refinedLabel}>Description</label>
               <textarea
@@ -235,7 +234,7 @@ export default function FormulaInfo({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className={refinedLabel}>Category</label>
                 <div className="relative">
@@ -250,7 +249,7 @@ export default function FormulaInfo({
                       <option key={c.id || c.category_name} value={c.category_name}>{c.category_name}</option>
                     ))}
                   </select>
-                  <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none" />
+                  <ChevronDown size={14} className="absolute right-3 top-3.5 text-slate-400 pointer-events-none" />
                 </div>
               </div>
               <div>
@@ -267,14 +266,14 @@ export default function FormulaInfo({
                       <option key={s.id || s.subcategory_name} value={s.subcategory_name}>{s.subcategory_name}</option>
                     ))}
                   </select>
-                  <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none" />
+                  <ChevronDown size={14} className="absolute right-3 top-3.5 text-slate-400 pointer-events-none" />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="p-5 bg-blue-50/30 rounded-2xl border border-blue-100/50 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 md:p-5 bg-blue-50/30 rounded-2xl border border-blue-100/50 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={refinedLabel}>Product Type</label>
                   <div className="relative">
@@ -289,7 +288,7 @@ export default function FormulaInfo({
                         <option key={pt.id || pt.product_type} value={pt.product_type}>{pt.product_type}</option>
                       ))}
                     </select>
-                    <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none" />
+                    <ChevronDown size={14} className="absolute right-3 top-3.5 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
                 <div>
@@ -306,7 +305,7 @@ export default function FormulaInfo({
                         <option key={pf.id || pf.product_format} value={pf.product_format}>{pf.product_format}</option>
                       ))}
                     </select>
-                    <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none" />
+                    <ChevronDown size={14} className="absolute right-3 top-3.5 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -314,7 +313,7 @@ export default function FormulaInfo({
         </div>
 
         {/* RIGHT COLUMN */}
-        <div className={`lg:col-span-7 flex flex-col min-h-0 space-y-4 ${isFullscreen ? 'absolute inset-0 z-50 bg-white p-6 rounded-xl border-2 border-blue-500 animate-in zoom-in-95 duration-200' : ''}`}>
+        <div className={`lg:col-span-7 flex flex-col min-h-[400px] lg:min-h-0 space-y-4 ${isFullscreen ? 'fixed md:absolute inset-0 z-50 bg-white p-4 md:p-6 rounded-none md:rounded-xl border-0 md:border-2 border-blue-500 animate-in zoom-in-95 duration-200' : ''}`}>
           
           {!isFullscreen && (
             <div className="flex-shrink-0 pt-2 h-auto flex flex-col">
@@ -362,7 +361,7 @@ export default function FormulaInfo({
                       }
                     </select>
                     <div className="h-full flex items-center px-2 text-slate-400 text-xs italic pointer-events-none">
-                      {selectedQualities.length === 0 ? "Select product qualities..." : "Add more..."}
+                      {selectedQualities.length === 0 ? "Select qualities..." : "Add more..."}
                     </div>
                   </div>
                 )}
@@ -390,7 +389,7 @@ export default function FormulaInfo({
                 flex-1 w-full font-mono text-[13px] bg-slate-50/30 
                 leading-loose p-5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200
                 resize-none focus:bg-white transition-colors
-                ${isFullscreen ? 'text-[15px] p-8' : ''}
+                ${isFullscreen ? 'text-[14px] md:text-[15px] p-6 md:p-8' : ''}
               `}
               placeholder="Enter manufacturing steps..."
               value={formData.notes}

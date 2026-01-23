@@ -215,11 +215,11 @@ export default function FormulaFormContent() {
       <main className="flex-1 flex flex-col min-w-0 h-screen">
         <Navbar title="Formula Master Records" Icon={Beaker} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
-        <div className="flex-1 flex flex-col min-h-0 p-4 md:p-8 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 p-2 md:p-8 overflow-hidden">
           <form id="formula-form" onSubmit={handleSubmit} className="h-full flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
             
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
-              <div className="flex items-center gap-4 truncate">
+            <div className="px-4 py-3 md:px-6 md:py-4 border-b border-slate-100 flex items-center justify-between bg-white">
+              <div className="flex items-center gap-2 md:gap-4 truncate">
                 <Link 
                   href="/formula" 
                   onClick={handleBackClick}
@@ -228,11 +228,11 @@ export default function FormulaFormContent() {
                   <ArrowLeft size={18} />
                 </Link>
                 <div className="truncate">
-                  <h1 className="text-lg font-bold text-slate-700 truncate flex items-center gap-3">
+                  <h1 className="text-sm md:text-lg font-bold text-slate-700 truncate flex items-center gap-2 md:gap-3">
                     {isEditMode ? formData.formula_code : 'Create New Formula'}
                     {isDirty && (
-                        <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-bold uppercase tracking-widest border border-blue-100">
-                            Pending Changes
+                        <span className="hidden md:inline-block px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-bold uppercase tracking-widest border border-blue-100">
+                            Pending
                         </span>
                     )}
                   </h1>
@@ -240,17 +240,17 @@ export default function FormulaFormContent() {
               </div>
 
               {isStatusLocked && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-500 border border-slate-200 rounded-lg text-xs font-semibold uppercase tracking-wider">
-                  <Lock size={14} /> View Only
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-500 border border-slate-200 rounded-lg text-[10px] md:text-xs font-semibold uppercase tracking-wider flex-shrink-0">
+                  <Lock size={12} className="md:w-[14px]" /> View Only
                 </div>
               )}
             </div>
 
-            <div className="flex px-6 border-b border-slate-100 bg-slate-50/50">
+            <div className="flex px-4 md:px-6 border-b border-slate-100 bg-slate-50/50 overflow-x-auto scrollbar-none">
                 <button 
                     type="button"
                     onClick={() => setActiveTab('general')}
-                    className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all border-b-2 ${activeTab === 'general' ? 'border-blue-600 text-blue-600 bg-white shadow-[0_4px_0_-2px_rgba(37,99,235,1)]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                    className={`flex items-center gap-2 px-4 md:px-6 py-3 md:py-4 text-[12px] md:text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === 'general' ? 'border-blue-600 text-blue-600 bg-white shadow-[0_4px_0_-2px_rgba(37,99,235,1)]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
                 >
                     <ClipboardList size={18} />
                     General Info
@@ -259,15 +259,15 @@ export default function FormulaFormContent() {
                   <button 
                       type="button" 
                       onClick={() => setActiveTab('ingredients')}
-                      className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all border-b-2 ${activeTab === 'ingredients' ? 'border-blue-600 text-blue-600 bg-white shadow-[0_4px_0_-2px_rgba(37,99,235,1)]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                      className={`flex items-center gap-2 px-4 md:px-6 py-3 md:py-4 text-[12px] md:text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === 'ingredients' ? 'border-blue-600 text-blue-600 bg-white shadow-[0_4px_0_-2px_rgba(37,99,235,1)]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
                   >
                       <FlaskConical size={18} />
-                      Formula Ingredients
+                      Ingredients
                   </button>
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 md:p-10 scrollbar-thin scrollbar-thumb-slate-200">
+            <div className="flex-1 overflow-y-auto p-4 md:p-10 scrollbar-thin scrollbar-thumb-slate-200">
               {error && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 text-sm font-medium rounded-lg flex items-center gap-3">
                    <Info size={18} /> {error}

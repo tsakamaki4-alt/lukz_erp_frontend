@@ -62,11 +62,12 @@ export default function CostingTab({ selectedPart, handleInputChange }: CostingT
   return (
     <div className="w-full space-y-6 pb-8">
       {/* Financial Core Group */}
-      <div className="bg-slate-50/50 p-5 rounded-xl border border-slate-200/60 space-y-5">
+      <div className="bg-slate-50/50 p-4 md:p-5 rounded-xl border border-slate-200/60 space-y-5">
+        
         {/* Current Cost Row */}
-        <div className="flex items-center gap-6">
-          <label className="w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Cost</label>
-          <div className="flex-1 flex items-center gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6">
+          <label className="lg:w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Cost</label>
+          <div className="flex-1 flex flex-col md:flex-row items-stretch md:items-center gap-4">
             <div className="relative flex-[1.5]">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
               <input 
@@ -80,15 +81,15 @@ export default function CostingTab({ selectedPart, handleInputChange }: CostingT
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[9px] font-black uppercase bg-slate-100 px-1.5 py-0.5 rounded">Lb</span>
             </div>
             
-            <div className="flex items-center gap-3 px-2">
+            <div className="flex items-center gap-3 px-0 md:px-2">
               <span className="text-[9px] text-slate-400 font-black uppercase tracking-tighter whitespace-nowrap">As Of</span>
-              <div className="relative">
+              <div className="relative flex-1 md:flex-none">
                 <input 
                   type="date" 
                   name="cost_date"
                   value={selectedPart.cost_date || ''}
                   onChange={handleInputChange}
-                  className="pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-xs w-44 outline-none focus:border-blue-500 transition-all font-medium" 
+                  className="w-full md:w-44 pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all font-medium" 
                 />
                 <Calendar size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
               </div>
@@ -110,10 +111,10 @@ export default function CostingTab({ selectedPart, handleInputChange }: CostingT
           </div>
         </div>
 
-        {/* Current Freight Row + Decimal precision control next to it */}
-        <div className="flex items-center gap-6">
-          <label className="w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Freight</label>
-          <div className="flex-1 flex items-center gap-4">
+        {/* Current Freight Row + Decimal precision control */}
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6">
+          <label className="lg:w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Freight</label>
+          <div className="flex-1 flex flex-col md:flex-row items-stretch md:items-center gap-4">
             <div className="relative flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
               <input 
@@ -126,8 +127,7 @@ export default function CostingTab({ selectedPart, handleInputChange }: CostingT
               />
             </div>
 
-            {/* Decimal Selector - Positioned next to freight */}
-            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm transition-all focus-within:ring-2 focus-within:ring-blue-100">
+            <div className="flex items-center justify-between md:justify-start gap-3 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm transition-all focus-within:ring-2 focus-within:ring-blue-100">
               <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Decimal Precision</span>
               <div className="flex items-center gap-2 border-l pl-3 border-slate-100">
                 <Hash size={12} className="text-blue-500" />
@@ -147,8 +147,8 @@ export default function CostingTab({ selectedPart, handleInputChange }: CostingT
         </div>
 
         {/* Cost + Freight (Visual Impact) */}
-        <div className="flex items-center gap-6 pt-2">
-          <label className="w-36 text-[10px] font-black text-blue-600 uppercase tracking-widest">Cost + Freight</label>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6 pt-2">
+          <label className="lg:w-36 text-[10px] font-black text-blue-600 uppercase tracking-widest">Cost + Freight</label>
           <div className="relative flex-1">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 text-xs font-bold">$</span>
             <input 
@@ -163,8 +163,8 @@ export default function CostingTab({ selectedPart, handleInputChange }: CostingT
 
       {/* Logistics & Sourcing Group */}
       <div className="space-y-4 px-1">
-        <div className="flex items-center gap-6">
-          <label className="w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Lead Time</label>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6">
+          <label className="lg:w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Lead Time</label>
           <div className="relative flex-1 group">
             <input 
               type="number" 
@@ -178,8 +178,8 @@ export default function CostingTab({ selectedPart, handleInputChange }: CostingT
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <label className="w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Origin Country</label>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6">
+          <label className="lg:w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Origin Country</label>
           <div className="relative flex-1" ref={dropdownRef}>
             <div 
               onClick={() => setIsCountryOpen(!isCountryOpen)}
@@ -229,8 +229,8 @@ export default function CostingTab({ selectedPart, handleInputChange }: CostingT
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <label className="w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Manufacturer</label>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6">
+          <label className="lg:w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Manufacturer</label>
           <div className="relative flex-1">
             <input 
               type="text" 
@@ -252,8 +252,8 @@ export default function CostingTab({ selectedPart, handleInputChange }: CostingT
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <label className="w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Primary Supplier</label>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6">
+          <label className="lg:w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Primary Supplier</label>
           <div className="relative flex-1">
             <input 
               type="text" 
@@ -275,41 +275,53 @@ export default function CostingTab({ selectedPart, handleInputChange }: CostingT
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <label className="w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Handling</label>
-          <div className="flex-1 flex items-center gap-3">
-            <input 
-              type="text" 
-              name="handling_type"
-              placeholder="Type"
-              value={selectedPart.handling_type || ''} 
-              onChange={handleInputChange}
-              className="flex-[1.5] px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-blue-500 shadow-sm" 
-            />
-            <input 
-              type="number" 
-              name="handling_weight"
-              placeholder="Weight"
-              value={selectedPart.handling_weight ?? ''} 
-              onChange={handleInputChange}
-              className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-blue-500 shadow-sm" 
-            />
-            <input 
-              type="text" 
-              name="handling_unit"
-              placeholder="UOM"
-              value={selectedPart.handling_unit || ''} 
-              onChange={handleInputChange}
-              className="w-24 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-slate-500 text-center outline-none focus:border-blue-500 shadow-sm uppercase tracking-tighter" 
-            />
-            <input 
-              type="text" 
-              name="handling_container"
-              placeholder="Container"
-              value={selectedPart.handling_container || ''} 
-              onChange={handleInputChange}
-              className="flex-[1.5] px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-blue-500 shadow-sm" 
-            />
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6">
+          <label className="lg:w-36 text-[10px] font-black text-slate-500 uppercase tracking-widest">Handling</label>
+          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="space-y-1">
+               <span className="md:hidden text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Type</span>
+               <input 
+                type="text" 
+                name="handling_type"
+                placeholder="Type"
+                value={selectedPart.handling_type || ''} 
+                onChange={handleInputChange}
+                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-blue-500 shadow-sm" 
+              />
+            </div>
+            <div className="space-y-1">
+              <span className="md:hidden text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Weight</span>
+              <input 
+                type="number" 
+                name="handling_weight"
+                placeholder="Weight"
+                value={selectedPart.handling_weight ?? ''} 
+                onChange={handleInputChange}
+                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-blue-500 shadow-sm" 
+              />
+            </div>
+            <div className="space-y-1">
+              <span className="md:hidden text-[9px] font-bold text-slate-400 uppercase tracking-tighter">UOM</span>
+              <input 
+                type="text" 
+                name="handling_unit"
+                placeholder="UOM"
+                value={selectedPart.handling_unit || ''} 
+                onChange={handleInputChange}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-slate-500 text-center outline-none focus:border-blue-500 shadow-sm uppercase tracking-tighter" 
+              />
+            </div>
+            <div className="space-y-1">
+              <span className="md:hidden text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Container</span>
+              <input 
+                type="text" 
+                name="handling_container"
+                placeholder="Container"
+                value={selectedPart.handling_container || ''} 
+                onChange={handleInputChange}
+                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-blue-500 shadow-sm" 
+              />
+            </div>
           </div>
         </div>
       </div>
