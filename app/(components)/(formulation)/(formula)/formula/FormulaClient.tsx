@@ -38,6 +38,7 @@ interface UserInfo {
   pk?: number | string;
   permissions: string[];
   is_superuser: boolean;
+  is_staff: boolean;
 }
 
 export default function FormulasPage() {
@@ -47,6 +48,7 @@ export default function FormulasPage() {
   // Auth & User State
   const [permissions, setPermissions] = useState<string[]>([]);
   const [isSuperuser, setIsSuperuser] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | string | null>(null); 
   const [isAuthLoading, setIsAuthLoading] = useState(true); 
 
@@ -79,6 +81,7 @@ export default function FormulasPage() {
       const data = await apiRequest<UserInfo>('/api/auth/user-info/');
       setPermissions(data.permissions || []);
       setIsSuperuser(data.is_superuser || false);
+      setIsStaff(data.is_staff || false);
       setCurrentUserId(data.id || data.pk || null); 
     } catch (error) {
       console.error("Failed to sync fresh permissions:", error);
@@ -88,16 +91,16 @@ export default function FormulasPage() {
   }, []);
 
   const canModifyFolder = (folder: FormulationFolder) => 
-    isSuperuser || folder.user_id == currentUserId || permissions.includes('change_folder');
+    isSuperuser || isStaff || folder.user_id == currentUserId || permissions.includes('change_folder');
 
   const canDeleteFolder = (folder: FormulationFolder) => 
-    isSuperuser || folder.user_id == currentUserId || permissions.includes('delete_folder');
+    isSuperuser || isStaff || folder.user_id == currentUserId || permissions.includes('delete_folder');
 
   const canViewFormula = (formula: FormulaRecord) => 
-    isSuperuser || formula.user_id == currentUserId || permissions.includes('view_formula_master');
+    isSuperuser || isStaff || formula.user_id == currentUserId || permissions.includes('view_formula_master');
 
-  const canAddFolder = isSuperuser || permissions.includes('add_folder');
-  const canAddFormula = isSuperuser || permissions.includes('add_formula_master');
+  const canAddFolder = isSuperuser || isStaff || permissions.includes('add_folder');
+  const canAddFormula = isSuperuser || isStaff || permissions.includes('add_formula_master');
 
   const activeColCount = 5; 
 

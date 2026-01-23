@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { ShieldCheck, ChevronDown, X } from 'lucide-react';
+import { ShieldCheck, ChevronDown, X, Loader2 } from 'lucide-react';
 import { Part } from './page';
+import { apiRequest } from '@/app/lib/api';
 
 interface GeneralTabProps {
   selectedPart: Part;
@@ -10,11 +11,6 @@ interface GeneralTabProps {
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   dbStatuses: { id: number; name: string }[];
 }
-
-const CLASS_OPTIONS = ["Resins", "Additives", "Acids", "Solvents", "Pigments"];
-const SUBCLASS_OPTIONS = ["Thermoplastics", "UV Stabilizers", "Strong Acids", "Organic Solvents"];
-const CHEMICAL_CLASS_OPTIONS = ["Synthetic Polymers", "Inorganic Oxides", "Mineral Acids", "Hydrocarbons"];
-const FUNCTION_OPTIONS = ["AntiAcne Agent", "Antiallergic", "Aesthetic Enhancer", "UV Protector", "Stabilizer", "Solvent"];
 
 export default function GeneralTab({ 
   selectedPart, 
@@ -24,6 +20,39 @@ export default function GeneralTab({
 }: GeneralTabProps) {
   const [isFunctionDropdownOpen, setIsFunctionDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic Data States
+  const [functionsOptions, setFunctionsOptions] = useState<any[]>([]);
+  const [classOptions, setClassOptions] = useState<any[]>([]);
+  const [subclassOptions, setSubclassOptions] = useState<any[]>([]);
+  const [chemicalClassOptions, setChemicalClassOptions] = useState<any[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+
+  // Fetch dynamic setup data
+  useEffect(() => {
+    const fetchSetupData = async () => {
+      setIsLoadingOptions(true);
+      try {
+        const [funcs, pClasses, sClasses, cClasses] = await Promise.all([
+          apiRequest<any[]>('/api/setup/functions/'),
+          apiRequest<any[]>('/api/setup/product-classes/'),
+          apiRequest<any[]>('/api/setup/sub-classes/'),
+          apiRequest<any[]>('/api/setup/chemical-class/')
+        ]);
+
+        setFunctionsOptions(funcs);
+        setClassOptions(pClasses);
+        setSubclassOptions(sClasses);
+        setChemicalClassOptions(cClasses);
+      } catch (error) {
+        console.error("Error loading General Tab setup data:", error);
+      } finally {
+        setIsLoadingOptions(false);
+      }
+    };
+
+    fetchSetupData();
+  }, []);
 
   // Handle outside clicks for the custom function dropdown
   useEffect(() => {
@@ -36,12 +65,12 @@ export default function GeneralTab({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const toggleFunction = (func: string) => {
+  const toggleFunction = (funcName: string) => {
     const currentFunctions = selectedPart.functions || [];
-    const exists = currentFunctions.includes(func);
+    const exists = currentFunctions.includes(funcName);
     const newFunctions = exists 
-      ? currentFunctions.filter(f => f !== func) 
-      : [...currentFunctions, func];
+      ? currentFunctions.filter(f => f !== funcName) 
+      : [...currentFunctions, funcName];
     
     setSelectedPart({ ...selectedPart, functions: newFunctions });
   };
@@ -123,8 +152,8 @@ export default function GeneralTab({
       <div className="space-y-1.5 relative" ref={dropdownRef}>
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Function</label>
         <div 
-          onClick={() => setIsFunctionDropdownOpen(!isFunctionDropdownOpen)}
-          className="w-full min-h-[46px] px-2 py-2 bg-white border border-slate-200 rounded-lg flex flex-wrap gap-2 items-center relative cursor-pointer hover:border-slate-300 transition-colors"
+          onClick={() => !isLoadingOptions && setIsFunctionDropdownOpen(!isFunctionDropdownOpen)}
+          className={`w-full min-h-[46px] px-2 py-2 bg-white border border-slate-200 rounded-lg flex flex-wrap gap-2 items-center relative transition-colors ${isLoadingOptions ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-slate-300'}`}
         >
           {selectedPart.functions?.map((func) => (
             <div key={func} className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 border border-slate-200 rounded text-xs text-slate-800 font-medium">
@@ -138,36 +167,47 @@ export default function GeneralTab({
             </div>
           ))}
           {(!selectedPart.functions || selectedPart.functions.length === 0) && (
-            <span className="text-sm text-slate-400 px-2">Select functions...</span>
+            <span className="text-sm text-slate-400 px-2">
+              {isLoadingOptions ? 'Loading functions...' : 'Select functions...'}
+            </span>
           )}
           <div className="absolute right-3 flex items-center gap-2">
-            <X 
-              size={14} 
-              className="text-slate-400 hover:text-slate-600 cursor-pointer" 
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                setSelectedPart({ ...selectedPart, functions: [] }); 
-              }} 
-            />
-            <ChevronDown size={14} className="text-slate-400" />
+            {isLoadingOptions ? (
+              <Loader2 size={14} className="animate-spin text-slate-400" />
+            ) : (
+              <>
+                <X 
+                  size={14} 
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer" 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setSelectedPart({ ...selectedPart, functions: [] }); 
+                  }} 
+                />
+                <ChevronDown size={14} className="text-slate-400" />
+              </>
+            )}
           </div>
         </div>
 
         {isFunctionDropdownOpen && (
           <div className="absolute z-[100] w-full bottom-full mb-1 bg-white border border-slate-200 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
-            {FUNCTION_OPTIONS.map((option) => (
-              <div 
-                key={option}
-                onClick={() => toggleFunction(option)}
-                className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-colors ${
-                  selectedPart.functions?.includes(option) 
-                    ? "bg-blue-600 text-white" 
-                    : "hover:bg-slate-50 text-slate-700"
-                }`}
-              >
-                {option}
-              </div>
-            ))}
+            {functionsOptions.map((option) => {
+              const val = option.functions; // Field from /api/setup/functions
+              return (
+                <div 
+                  key={option.id}
+                  onClick={() => toggleFunction(val)}
+                  className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-colors ${
+                    selectedPart.functions?.includes(val) 
+                      ? "bg-blue-600 text-white" 
+                      : "hover:bg-slate-50 text-slate-700"
+                  }`}
+                >
+                  {val}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -182,8 +222,8 @@ export default function GeneralTab({
               onChange={handleInputChange}
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all text-sm text-slate-800 appearance-none cursor-pointer"
             >
-              <option value="">Select Class...</option>
-              {CLASS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              <option value="">{isLoadingOptions ? 'Loading...' : 'Select Class...'}</option>
+              {classOptions.map(opt => <option key={opt.id} value={opt.class_name}>{opt.class_name}</option>)}
             </select>
             <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
@@ -198,8 +238,8 @@ export default function GeneralTab({
               onChange={handleInputChange}
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all text-sm text-slate-800 appearance-none cursor-pointer"
             >
-              <option value="">Select Subclass...</option>
-              {SUBCLASS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              <option value="">{isLoadingOptions ? 'Loading...' : 'Select Subclass...'}</option>
+              {subclassOptions.map(opt => <option key={opt.id} value={opt.subclass}>{opt.subclass}</option>)}
             </select>
             <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
@@ -214,8 +254,8 @@ export default function GeneralTab({
               onChange={handleInputChange}
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all text-sm text-slate-800 appearance-none cursor-pointer"
             >
-              <option value="">Select Chemical Class...</option>
-              {CHEMICAL_CLASS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              <option value="">{isLoadingOptions ? 'Loading...' : 'Select Chemical Class...'}</option>
+              {chemicalClassOptions.map(opt => <option key={opt.id} value={opt.chemical_class}>{opt.chemical_class}</option>)}
             </select>
             <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>

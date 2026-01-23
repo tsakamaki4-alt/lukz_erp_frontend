@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, FlaskConical, Package, ShoppingCart, Users2,
   Wallet, Factory, UserCog, LogOut, Menu, ChevronDown,
-  Wrench, Zap, UserCircle, Settings2
+  Wrench, Zap, UserCircle, Settings2, ShieldCheck
 } from 'lucide-react';
 import { apiRequest } from '@/app/lib/api';
 
@@ -39,6 +39,7 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, setIsOpen, onNavigate }: SidebarProps) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -124,10 +125,35 @@ export default function Sidebar({ isOpen, setIsOpen, onNavigate }: SidebarProps)
   ];
 
   const hasPermission = useCallback((permCode?: string) => {
-    if (isAdmin) return true;
+    if (isAdmin || isStaff) return true;
     if (!permCode) return true; 
     return userPermissions.includes(permCode);
-  }, [isAdmin, userPermissions]);
+  }, [isAdmin, isStaff, userPermissions]);
+
+  const isParentActive = useCallback((item: MenuItem) => {
+    if (item.path === pathname) return true;
+    if (item.sub) {
+      return item.sub.some(sub => sub.path !== '#' && pathname === sub.path);
+    }
+    return false;
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    let foundActiveName: string | null = null;
+    menuGroups.forEach(group => {
+      group.items.forEach(item => {
+        if (item.sub && isParentActive(item)) {
+          foundActiveName = item.name;
+        }
+      });
+    });
+
+    if (foundActiveName) {
+      setActiveMenu(foundActiveName);
+    }
+  }, [pathname, isLoaded, isParentActive]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -152,14 +178,13 @@ export default function Sidebar({ isOpen, setIsOpen, onNavigate }: SidebarProps)
     if (isProtectedRoute && !hasPermission(requiredPerm)) {
       router.push('/403');
     }
-  }, [pathname, isLoaded, hasPermission, router, menuGroups]);
+  }, [pathname, isLoaded, hasPermission, router]);
 
   const fetchUserInfo = useCallback(async () => {
     try {
-      // Switched to centralized apiRequest wrapper
       const data = await apiRequest<any>('/api/auth/user-info/');
-      
       setIsAdmin(data.is_superuser);
+      setIsStaff(data.is_staff);
       setUserPermissions(data.permissions);
       setUserData({ 
         name: data.username, 
@@ -175,10 +200,14 @@ export default function Sidebar({ isOpen, setIsOpen, onNavigate }: SidebarProps)
   useEffect(() => { fetchUserInfo(); }, [fetchUserInfo]);
 
   const toggleSubmenu = (menu: string) => {
-    setActiveMenu(activeMenu === menu ? null : menu);
+    setActiveMenu(prev => prev === menu ? null : menu);
   };
 
   const handleNavigation = (e: React.MouseEvent, path: string) => {
+    if (path === '#') {
+      e.preventDefault();
+      return;
+    }
     if (onNavigate && !onNavigate(path)) {
       e.preventDefault();
       return;
@@ -211,16 +240,22 @@ export default function Sidebar({ isOpen, setIsOpen, onNavigate }: SidebarProps)
           <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all">
             <Menu size={20} />
           </button>
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-4 mt-2">
             <div className="relative flex-shrink-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 rounded-2xl flex items-center justify-center border border-blue-500/20 shadow-inner">
-                <UserCircle className="text-blue-400 w-7 h-7" />
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 rounded-2xl flex items-center justify-center border border-blue-500/20 shadow-inner">
+                <UserCircle className="text-blue-400 w-8 h-8" />
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-[3px] border-[#111827] rounded-full shadow-lg"></div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 border-[3px] border-[#111827] rounded-full shadow-lg"></div>
             </div>
             <div className="flex flex-col min-w-0 pr-6">
-              <span className="text-sm font-bold text-white truncate leading-tight tracking-tight">{userData.name}</span>
-              <span className="text-[11px] text-blue-400/70 truncate font-medium mt-0.5 hover:text-blue-400 transition-colors cursor-default">{userData.email}</span>
+              {isStaff && (
+                <div className="flex items-center gap-1.5 w-fit px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded-md text-[9px] text-blue-400 font-bold uppercase tracking-widest mb-1.5">
+                  <ShieldCheck size={10} strokeWidth={2.5} />
+                  <span>Admin Access</span>
+                </div>
+              )}
+              <span className="text-[15px] font-bold text-white truncate leading-none tracking-tight">{userData.name}</span>
+              <span className="text-[11px] text-blue-400/60 truncate font-medium mt-1 hover:text-blue-400 transition-colors cursor-default">{userData.email}</span>
             </div>
           </div>
         </div>
@@ -243,40 +278,45 @@ export default function Sidebar({ isOpen, setIsOpen, onNavigate }: SidebarProps)
               <div key={group.group}>
                 <p className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">{group.group}</p>
                 <div className="space-y-1">
-                  {visibleItems.map((item) => (
-                    <div key={item.name} className="px-2">
-                      {item.sub ? (
-                        <>
-                          <button onClick={() => toggleSubmenu(item.name)}
-                            className={`flex items-center justify-between w-full px-4 py-2.5 hover:bg-white/5 hover:text-white rounded-xl transition-all group ${activeMenu === item.name ? 'bg-white/5 text-white' : ''}`}>
-                            <div className="flex items-center">
-                              <item.icon className={`w-5 h-5 mr-3 ${item.color} group-hover:scale-110 transition-transform`} />
-                              <span className="font-medium text-sm">{item.name}</span>
-                            </div>
-                            <ChevronDown className={`w-3.5 h-3.5 transition-transform opacity-40 ${activeMenu === item.name ? 'rotate-180' : ''}`} />
-                          </button>
-                          {activeMenu === item.name && (
-                            <div className="ml-9 mt-1 space-y-1 border-l border-white/10 pl-4">
-                              {item.sub.map(sub => (
-                                hasPermission(sub.perm) && (
-                                  <Link key={sub.title} href={sub.path} onClick={(e) => handleNavigation(e, sub.path)}
-                                    className={`block py-2 text-xs transition-colors ${pathname === sub.path ? 'text-blue-400 font-bold' : 'text-slate-500 hover:text-blue-400'}`}>
-                                    {sub.title}
-                                  </Link>
-                                )
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <Link href={item.path || '#'} onClick={(e) => handleNavigation(e, item.path || '#')}
-                          className={`flex items-center px-4 py-2.5 rounded-xl transition-all group ${pathname === item.path ? 'bg-white/5 text-white' : 'hover:bg-white/5'}`}>
-                          <item.icon className={`w-5 h-5 mr-3 ${item.color} group-hover:scale-110 transition-transform`} />
-                          <span className="font-medium text-sm">{item.name}</span>
-                        </Link>
-                      )}
-                    </div>
-                  ))}
+                  {visibleItems.map((item) => {
+                    const isActive = isParentActive(item);
+                    const isExpanded = activeMenu === item.name;
+
+                    return (
+                      <div key={item.name} className="px-2">
+                        {item.sub ? (
+                          <>
+                            <button onClick={() => toggleSubmenu(item.name)}
+                              className={`flex items-center justify-between w-full px-4 py-2.5 rounded-xl transition-all group ${isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-white/5 hover:text-white'} ${isExpanded && !isActive ? 'bg-white/5 text-white font-medium' : ''}`}>
+                              <div className="flex items-center">
+                                <item.icon className={`w-5 h-5 mr-3 group-hover:scale-110 transition-transform ${isActive ? 'text-white' : item.color}`} />
+                                <span className="font-medium text-sm">{item.name}</span>
+                              </div>
+                              <ChevronDown className={`w-3.5 h-3.5 transition-transform opacity-40 ${isExpanded ? 'rotate-180' : ''}`} />
+                            </button>
+                            {isExpanded && (
+                              <div className="ml-9 mt-1 space-y-1 border-l border-white/10 pl-4">
+                                {item.sub.map(sub => (
+                                  hasPermission(sub.perm) && (
+                                    <Link key={sub.title} href={sub.path} onClick={(e) => handleNavigation(e, sub.path)}
+                                      className={`block py-2 text-xs transition-colors ${pathname === sub.path ? 'text-blue-400 font-bold' : 'text-slate-500 hover:text-blue-400'}`}>
+                                      {sub.title}
+                                    </Link>
+                                  )
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <Link href={item.path || '#'} onClick={(e) => handleNavigation(e, item.path || '#')}
+                            className={`flex items-center px-4 py-2.5 rounded-xl transition-all group ${isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-white/5'}`}>
+                            <item.icon className={`w-5 h-5 mr-3 group-hover:scale-110 transition-transform ${isActive ? 'text-white' : item.color}`} />
+                            <span className="font-medium text-sm">{item.name}</span>
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );

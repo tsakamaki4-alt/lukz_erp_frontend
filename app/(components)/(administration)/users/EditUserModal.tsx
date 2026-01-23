@@ -1,12 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, User, Mail, Shield, Save, Loader2, Power, Fingerprint, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, User, Mail, Shield, Save, Loader2, Power, Fingerprint, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface Group { id: number; name: string; }
 interface UserData {
-  id: number; username: string; email: string;
-  first_name: string; last_name: string; is_active: boolean; groups: Group[];
+  id: number; 
+  username: string; 
+  email: string;
+  first_name: string; 
+  last_name: string; 
+  is_active: boolean; 
+  is_staff: boolean;
+  groups: Group[];
 }
 
 interface EditUserModalProps {
@@ -19,7 +25,11 @@ interface EditUserModalProps {
 
 export default function EditUserModal({ user, availableGroups, onClose, onSave, isProcessing }: EditUserModalProps) {
   const [formData, setFormData] = useState({
-    first_name: '', last_name: '', email: '', is_active: true, 
+    first_name: '', 
+    last_name: '', 
+    email: '', 
+    is_active: true, 
+    is_staff: false,
     group_id: null as number | null 
   });
 
@@ -32,6 +42,7 @@ export default function EditUserModal({ user, availableGroups, onClose, onSave, 
         last_name: user.last_name || '',
         email: user.email || '',
         is_active: user.is_active,
+        is_staff: user.is_staff || false,
         group_id: user.groups.length > 0 ? user.groups[0].id : null
       });
     }
@@ -115,23 +126,47 @@ export default function EditUserModal({ user, availableGroups, onClose, onSave, 
                   </div>
                 </div>
 
-                {/* Account Status moved here under Email */}
+                {/* Authorization Status */}
                 <div className="space-y-4 pt-2">
                   <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     <Power size={14} /> Authorization Status
                   </div>
-                  <div className={`p-4 rounded-xl border flex items-center justify-between transition-colors ${formData.is_active ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/30 border-rose-100'}`}>
-                    <div>
-                      <div className={`text-[10px] font-bold uppercase tracking-tight ${formData.is_active ? 'text-emerald-700' : 'text-rose-700'}`}>
-                        {formData.is_active ? 'Active Connection' : 'Account Locked'}
+                  
+                  <div className="space-y-3">
+                    {/* Active Toggle */}
+                    <div className={`p-4 rounded-xl border flex items-center justify-between transition-colors ${formData.is_active ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/30 border-rose-100'}`}>
+                      <div>
+                        <div className={`text-[10px] font-bold uppercase tracking-tight ${formData.is_active ? 'text-emerald-700' : 'text-rose-700'}`}>
+                          {formData.is_active ? 'Active Connection' : 'Account Locked'}
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
+                          {formData.is_active ? 'User has full system access.' : 'Access to all modules is restricted.'}
+                        </p>
                       </div>
-                      <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
-                        {formData.is_active ? 'User has full system access.' : 'Access to all modules is restricted.'}
-                      </p>
+                      <button type="button" onClick={() => setFormData({ ...formData, is_active: !formData.is_active })} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${formData.is_active ? 'bg-emerald-600' : 'bg-slate-300'}`}>
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${formData.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
                     </div>
-                    <button type="button" onClick={() => setFormData({ ...formData, is_active: !formData.is_active })} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${formData.is_active ? 'bg-emerald-600' : 'bg-slate-300'}`}>
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${formData.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </button>
+
+                    {/* Staff Toggle (New) */}
+                    <div className={`p-4 rounded-xl border flex items-center justify-between transition-colors ${formData.is_staff ? 'bg-blue-50/50 border-blue-100' : 'bg-slate-50/50 border-slate-100'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${formData.is_staff ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+                          <ShieldCheck size={16} />
+                        </div>
+                        <div>
+                          <div className={`text-[10px] font-bold uppercase tracking-tight ${formData.is_staff ? 'text-blue-700' : 'text-slate-600'}`}>
+                            System Administration
+                          </div>
+                          <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
+                            Grant Django Admin dashboard access.
+                          </p>
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => setFormData({ ...formData, is_staff: !formData.is_staff })} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${formData.is_staff ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${formData.is_staff ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
