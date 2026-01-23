@@ -105,7 +105,7 @@ export default function RawMaterialsPage() {
       return ['General'];
     }
     return allTabs;
-  }, [selectedPart]);
+  }, [selectedPart, allTabs]);
 
   const isDirty = useMemo(() => {
     if (!selectedPart || !originalSnapshot) return false;
@@ -183,11 +183,17 @@ export default function RawMaterialsPage() {
     setIsSaving(true);
     setErrorMessage(null);
     
+    // DATA SANITIZATION LAYER
     const payload = {
       ...selectedPart,
+      // Fix for Decimals
       decimals: (selectedPart.decimals === '' || selectedPart.decimals === null || selectedPart.decimals === undefined) 
                 ? 4 
-                : Number(selectedPart.decimals)
+                : Number(selectedPart.decimals),
+      // Fix for cost_date: If empty string, send null to prevent Django DateField format error
+      cost_date: (selectedPart.cost_date === '' || !selectedPart.cost_date) 
+                 ? null 
+                 : selectedPart.cost_date
     };
 
     const isNew = !selectedPart.id;
