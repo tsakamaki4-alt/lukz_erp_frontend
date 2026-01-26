@@ -52,10 +52,11 @@ export default function FormulaInfo({
   // --- Filtering Logic ---
 
   // Filter statuses to only show those belonging to the 'formulation' app
+// Filter statuses to only show those belonging to the 'formulation' app
   const formulationStatuses = useMemo(() => {
-    return statuses.filter(s => s.app_label === 'formulation');
+    return statuses.filter(s => s.app_label === 'formulation' || s.app_label === 'All');
   }, [statuses]);
-
+  
   const filteredSubcategories = useMemo(() => {
     if (!formData.category) return [];
     return subcategories.filter(sub => sub.category_name === formData.category);

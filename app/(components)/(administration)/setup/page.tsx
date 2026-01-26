@@ -10,7 +10,7 @@ import {
   Tag, Layers, Beaker, FileCode, CheckCircle2, Loader2,
   FlaskConical, ClipboardList, Globe, MapPin, Scale, Package, 
   Variable, BookOpen, ListTree, AlertCircle, Download, Upload,
-  Info
+  Info, Hash, Layout, X, AlertTriangle
 } from 'lucide-react';
 
 // --- Centralized API Client Import ---
@@ -30,11 +30,16 @@ interface SetupItem {
   app_label?: string;
   abbreviation?: string;
   category?: number;
-  subcategory?: number;
+  subcategory?: any; 
+  subcategory_id?: number;
+  country?: number;
+  country_name?: string;
   is_relative?: boolean;
   row_number?: number;
+  decimals?: number;
   eqtext?: string;
   class_name?: string;
+  class_id?: number;
   subclass?: string;
   color_code?: string;
   description?: string;
@@ -54,14 +59,14 @@ const SETUP_TABS = [
   { id: 'chemical-classes', name: 'Chemical Class', icon: FlaskConical, api: 'chemical-class', labelField: 'chemical_class' },
   { id: 'countries', name: 'Countries', icon: Globe, api: 'countries', labelField: 'name' },
   { id: 'states', name: 'States', icon: MapPin, api: 'states', parentApi: 'countries', parentField: 'country', labelField: 'name' },
-  { id: 'uom', name: 'Units of Measure', icon: Scale, api: 'uom', labelField: 'code', secondaryFields: ['name', 'description'] },
+  { id: 'uom', name: 'Units of Measure', icon: Scale, api: 'uom', labelField: 'code', secondaryFields: ['name'] },
   { id: 'packaging', name: 'Packaging Types', icon: Package, api: 'packaging-types', labelField: 'name', secondaryFields: ['description'] },
-  { id: 'equations', name: 'Equations', icon: Variable, api: 'equations', labelField: 'eqtext', secondaryFields: ['description', 'row_number'] },
+  { id: 'equations', name: 'Equations', icon: Variable, api: 'equations', labelField: 'eqtext', secondaryFields: ['description', 'row_number', 'decimals'] },
   { id: 'product-classes', name: 'Product Classes', icon: BookOpen, api: 'product-classes', labelField: 'class_name', secondaryFields: ['description', 'class_type'] },
-  { id: 'sub-classes', name: 'Sub-Classes', icon: ListTree, api: 'sub-classes', labelField: 'subclass', secondaryFields: ['class_name', 'description'] },
+  { id: 'sub-classes', name: 'Sub-Classes', icon: ListTree, api: 'sub-classes', parentApi: 'product-classes', parentField: 'class_id', labelField: 'subclass', secondaryFields: ['description'] },
   { id: 'quality-specs', name: 'Product Quality', icon: Settings2, api: 'quality-specs', labelField: 'product_quality' },
   { id: 'product-formats', name: 'Product Formats', icon: FileCode, api: 'product-formats', labelField: 'product_format' },
-  { id: 'statuses', name: 'Statuses', icon: CheckCircle2, api: 'statuses', labelField: 'name', secondaryFields: ['code'] },
+  { id: 'statuses', name: 'Statuses', icon: CheckCircle2, api: 'statuses', labelField: 'name', secondaryFields: ['code', 'description'] },
 ];
 
 export default function SetupPage() {
@@ -78,21 +83,23 @@ export default function SetupPage() {
   const [searchQuery, setSearchQuery] = useState('');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<SetupItem | null>(null);
   const [editingItem, setEditingItem] = useState<SetupItem | null>(null);
   const [formData, setFormData] = useState({ 
     name: '', code: '', parentId: '', extra: '', app_label: '',
-    description: '', class_type: '', subclass: '', class_name: '', row_number: ''
+    description: '', class_type: '', subclass: '', class_name: '', row_number: '', decimals: ''
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [isImporting, setIsImporting] = useState(false);
   const [importStats, setImportStats] = useState({ current: 0, total: 0 });
-  const [importError, setImportError] = useState<{title: string, message: string} | null>(null);
+  const [importError, setImportError] = useState<{title: string, message: string, expected?: string, found?: string} | null>(null);
 
   const fetchAppLabels = useCallback(async () => {
     try {
       const result = await apiRequest<AppLabel[]>('/api/setup/app-labels/');
-      setAppLabels(result);
+      setAppLabels([{ id: 'All', name: 'All Modules' }, ...result]);
     } catch (error) { console.error(error); }
   }, []);
 
@@ -106,8 +113,7 @@ export default function SetupPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const queryParam = activeTab.id === 'statuses' ? '?app_label=all' : ''; 
-      const result = await apiRequest<SetupItem[]>(`/api/setup/${activeTab.api}/${queryParam}`);
+      const result = await apiRequest<SetupItem[]>(`/api/setup/${activeTab.api}/`);
       setData(result);
 
       if (activeTab.parentApi) {
@@ -137,12 +143,18 @@ export default function SetupPage() {
     return searchField.toString().toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure?")) return;
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
     try {
-      await apiRequest(`/api/setup/${activeTab.api}/${id}/`, { method: 'DELETE' });
+      await apiRequest(`/api/setup/${activeTab.api}/${itemToDelete.id}/`, { method: 'DELETE' });
+      setItemToDelete(null);
       fetchData();
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -162,7 +174,10 @@ export default function SetupPage() {
     if (activeTab.id === 'uom') { body.code = formData.name; body.name = formData.extra; }
     if (activeTab.id === 'product-classes') body.class_type = formData.class_type;
     if (activeTab.id === 'sub-classes') body.class_name = formData.class_name;
-    if (activeTab.id === 'equations') body.row_number = parseInt(formData.row_number) || 0;
+    if (activeTab.id === 'equations') {
+        body.row_number = parseInt(formData.row_number) || 0;
+        body.decimals = parseInt(formData.decimals) || 0;
+    }
 
     const url = editingItem ? `/api/setup/${activeTab.api}/${editingItem.id}/` : `/api/setup/${activeTab.api}/`;
     
@@ -175,7 +190,7 @@ export default function SetupPage() {
 
   const handleExport = () => {
     if (data.length === 0) return;
-    const allowedHeaders = [activeTab.labelField, 'code', 'abbreviation', activeTab.parentField, 'app_label', 'description', 'class_type', 'class_name', 'name', 'row_number'].filter(Boolean);
+    const allowedHeaders = [activeTab.labelField, 'code', 'abbreviation', activeTab.parentField, 'app_label', 'description', 'class_type', 'class_name', 'name', 'row_number', 'decimals'].filter(Boolean);
     const headers = Object.keys(data[0]).filter(h => allowedHeaders.includes(h));
     const csvRows = [headers.join(',')];
     for (const row of data) {
@@ -200,44 +215,86 @@ export default function SetupPage() {
       if (lines.length === 0) return;
       
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/["']/g, ''));
-      const requiredLabel = activeTab.labelField.toLowerCase();
       
-      if (!headers.includes(requiredLabel)) {
-        setImportError({ title: "Mandatory Header Missing", message: `Required: "${activeTab.labelField}"` });
-        return;
-      }
+      // 1. Logic specifically for Statuses (Must be code, name)
+      if (activeTab.id === 'statuses') {
+        const hasCode = headers.includes('code');
+        const hasName = headers.includes('name');
 
-      setIsImporting(true);
-      const rows = lines.slice(1);
-      setImportStats({ current: 0, total: rows.length });
-
-      for (let i = 0; i < rows.length; i++) {
-        const values = rows[i].split(',').map(v => v.trim().replace(/["']/g, ''));
-        const payload: any = {};
-        
-        headers.forEach((header, idx) => {
-          // Explicitly map the CSV value to the labelField required by the Django Serializer
-          if (header === requiredLabel) {
-              payload[activeTab.labelField] = values[idx];
-          } 
-          else if (header === activeTab.parentField?.toLowerCase()) {
-              payload[activeTab.parentField!] = parseInt(values[idx]) || values[idx];
-          }
-          else if (['description', 'class_type', 'class_name', 'name', 'row_number', 'code', 'abbreviation'].includes(header)) {
-              payload[header] = values[idx];
-          }
-        });
-
-        if (payload[activeTab.labelField]) {
-            try { 
-                await apiRequest(`/api/setup/${activeTab.api}/`, { method: 'POST', body: JSON.stringify(payload) }); 
-            } catch (err) {
-                console.error("Row import failed:", err);
-            }
+        if (!hasCode || !hasName || headers.length !== 2) {
+          setImportError({ 
+              title: "Import Rejected: Schema Mismatch", 
+              message: `Status imports require exactly 2 columns: "code" and "name".`,
+              expected: "code, name",
+              found: headers.join(', ')
+          });
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
         }
-        setImportStats(prev => ({ ...prev, current: i + 1 }));
+
+        setIsImporting(true);
+        const rows = lines.slice(1);
+        setImportStats({ current: 0, total: rows.length });
+
+        for (let i = 0; i < rows.length; i++) {
+          const values = rows[i].split(',').map(v => v.trim().replace(/["']/g, ''));
+          const payload: any = { app_label: 'All' }; // Defaulting for bulk import
+          headers.forEach((header, idx) => {
+            if (header === 'code') payload.code = values[idx];
+            if (header === 'name') payload.name = values[idx];
+          });
+
+          try { 
+            await apiRequest(`/api/setup/${activeTab.api}/`, { method: 'POST', body: JSON.stringify(payload) }); 
+          } catch (err) { console.error(err); }
+          setImportStats(prev => ({ ...prev, current: i + 1 }));
+        }
+      } else {
+        // 2. Original Logic for all other tabs
+        const requiredLabel = activeTab.labelField.toLowerCase();
+        const requiredParent = activeTab.parentField?.toLowerCase();
+        const secondaryFields = activeTab.secondaryFields?.map((f: string) => f.toLowerCase()) || [];
+        const allRequired = [requiredLabel, ...(requiredParent ? [requiredParent] : []), ...secondaryFields];
+
+        const hasLabel = headers.includes(requiredLabel);
+        const hasParent = requiredParent 
+          ? (headers.includes(requiredParent) || headers.includes(`${requiredParent}_id`)) 
+          : true;
+
+        if (!hasLabel || !hasParent || headers.length !== allRequired.length) {
+          setImportError({ 
+              title: "Import Rejected: Blueprint Error", 
+              message: `Column mismatch for ${activeTab.name}.`,
+              expected: allRequired.join(', '),
+              found: headers.join(', ')
+          });
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+
+        setIsImporting(true);
+        const rows = lines.slice(1);
+        setImportStats({ current: 0, total: rows.length });
+
+        for (let i = 0; i < rows.length; i++) {
+          const values = rows[i].split(',').map(v => v.trim().replace(/["']/g, ''));
+          const payload: any = {};
+          headers.forEach((header, idx) => {
+            if (header === requiredLabel) payload[activeTab.labelField] = values[idx];
+            else if (header === requiredParent || header === `${requiredParent}_id`) payload[activeTab.parentField!] = parseInt(values[idx]) || values[idx];
+            else if (['row_number', 'decimals'].includes(header)) payload[header] = parseInt(values[idx]) || 0;
+            else if (['description', 'class_type', 'class_name', 'name', 'code', 'abbreviation', 'app_label'].includes(header)) payload[header] = values[idx];
+          });
+
+          if (payload[activeTab.labelField]) {
+              try { await apiRequest(`/api/setup/${activeTab.api}/`, { method: 'POST', body: JSON.stringify(payload) }); } catch (err) { console.error(err); }
+          }
+          setImportStats(prev => ({ ...prev, current: i + 1 }));
+        }
       }
+
       setTimeout(() => setIsImporting(false), 2000);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       fetchData();
     };
     reader.readAsText(file);
@@ -259,7 +316,7 @@ export default function SetupPage() {
               <input type="file" ref={fileInputRef} onChange={handleImport} accept=".csv" className="hidden" />
               <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold shadow-sm"><Download size={18} /> Export</button>
               <button onClick={() => fileInputRef.current?.click()} disabled={isImporting} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold shadow-sm disabled:opacity-50"><Upload size={18} /> Import</button>
-              <button onClick={() => { setEditingItem(null); setFormData({ name: '', code: '', parentId: parentData[0]?.id.toString() || '', extra: '', app_label: appLabels[0]?.id || '', description: '', class_type: '', subclass: '', class_name: '', row_number: '' }); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 active:scale-95"><Plus size={18} /> Add New</button>
+              <button onClick={() => { setEditingItem(null); setFormData({ name: '', code: '', parentId: parentData[0]?.id.toString() || '', extra: '', app_label: appLabels[0]?.id || '', description: '', class_type: '', subclass: '', class_name: '', row_number: '', decimals: '' }); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 active:scale-95"><Plus size={18} /> Add New</button>
             </div>
           </div>
 
@@ -290,41 +347,54 @@ export default function SetupPage() {
                 <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" size={32} /></div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredData.map((item: SetupItem) => (
-                    <div key={item.id} className="group p-5 rounded-2xl border border-slate-200 bg-white hover:border-blue-400 transition-all relative">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">#{item.id}</span>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { 
-                              setEditingItem(item); 
-                              setFormData({ 
-                                  name: (item as any)[activeTab.labelField] || '', 
-                                  code: item.code || '', 
-                                  parentId: (item.category || item.subcategory || (item as any).country || '').toString(), 
-                                  extra: item.abbreviation || '', 
-                                  app_label: item.app_label || '', 
-                                  description: item.description || '', 
-                                  class_type: item.class_type || '', 
-                                  subclass: item.subclass || '', 
-                                  class_name: item.class_name || '', 
-                                  row_number: (item.row_number || '').toString() 
-                              }); 
-                              setIsModalOpen(true); 
-                          }} className="p-1.5 text-slate-400 hover:text-blue-600"><Edit2 size={16} /></button>
-                          <button onClick={() => handleDelete(item.id)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 size={16} /></button>
+                  {filteredData.map((item: SetupItem) => {
+                    const rawParentId = (item as any)[activeTab.parentField || ''] || item.category || item.subcategory || item.country || item.class_id;
+                    const parentName = item.subcategory_name || item.category_name || item.country_name || item.class_name || parentData.find(p => p.id === rawParentId)?.subcategory_name || parentData.find(p => p.id === rawParentId)?.category_name || parentData.find(p => p.id === rawParentId)?.class_name || parentData.find(p => p.id === rawParentId)?.name;
+
+                    return (
+                      <div key={item.id} className="group p-5 rounded-2xl border border-slate-200 bg-white hover:border-blue-400 transition-all relative">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">#{item.id}</span>
+                            {item.app_label && (
+                              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[9px] font-black uppercase border border-blue-100">
+                                <Layout size={8} /> {item.app_label}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => { 
+                                setEditingItem(item); 
+                                setFormData({ 
+                                    name: (item as any)[activeTab.labelField] || '', code: item.code || '', parentId: (rawParentId || '').toString(), extra: item.abbreviation || '', app_label: item.app_label || '', description: item.description || '', class_type: item.class_type || '', subclass: item.subclass || '', class_name: item.class_name || '', row_number: (item.row_number || '').toString(), decimals: (item.decimals || '').toString()
+                                }); 
+                                setIsModalOpen(true); 
+                            }} className="p-1.5 text-slate-400 hover:text-blue-600"><Edit2 size={16} /></button>
+                            <button onClick={() => setItemToDelete(item)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 size={16} /></button>
+                          </div>
+                        </div>
+                        <h3 className="font-bold text-slate-800">{(item as any)[activeTab.labelField] || 'Unnamed'}</h3>
+                        <div className="flex flex-col gap-1.5 mt-3">
+                            {activeTab.parentField && (
+                                <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase w-fit ${parentName ? 'bg-slate-100 text-slate-600' : 'bg-rose-50 text-rose-600 italic'}`}>
+                                  <Layers size={10} className={parentName ? "text-slate-400" : "text-rose-400"} />
+                                  {activeTab.id === 'sub-classes' ? 'Class: ' : 'Parent: '}{parentName || 'Missing'}
+                                </div>
+                            )}
+                            {activeTab.secondaryFields?.map(field => {
+                                const val = (item as any)[field];
+                                if (val === undefined || val === null || val === '') return null;
+                                return (
+                                    <div key={field} className="flex items-center gap-2 text-[11px] text-slate-500">
+                                        <span className="font-semibold uppercase text-[9px] text-slate-400">{field.replace('_', ' ')}:</span>
+                                        <span className="truncate">{val}</span>
+                                    </div>
+                                );
+                            })}
                         </div>
                       </div>
-                      <h3 className="font-bold text-slate-800">{(item as any)[activeTab.labelField] || 'Unnamed'}</h3>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                          {(item.category_name || item.subcategory_name) && (
-                              <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold uppercase">
-                                Parent: {item.category_name || item.subcategory_name}
-                              </span>
-                          )}
-                          {item.row_number !== undefined && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">Row: {item.row_number}</span>}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -341,6 +411,9 @@ export default function SetupPage() {
         isSaving={isSaving} handleSave={handleSave}
         parentData={parentData} appLabels={appLabels}
         productClasses={productClasses} 
+        // Logic for Deletion passed to child component
+        itemToDelete={itemToDelete} setItemToDelete={setItemToDelete}
+        isDeleting={isDeleting} handleDelete={handleDelete}
       />
     </div>
   );

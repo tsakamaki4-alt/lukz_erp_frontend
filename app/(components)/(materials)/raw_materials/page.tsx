@@ -119,7 +119,7 @@ export default function RawMaterialsPage() {
         apiRequest<Part[]>('/api/inventory/parts/')
       ]);
 
-      setDbStatuses(statusData.filter((s: StatusRecord) => s.app_label === 'inventory'));
+      setDbStatuses(statusData.filter((s: StatusRecord) => s.app_label === 'inventory' ||  s.app_label === 'All'));
       const sortedData = [...partsData].sort((a, b) => (b.id || 0) - (a.id || 0));
       setParts(sortedData);
     } catch (error: any) {

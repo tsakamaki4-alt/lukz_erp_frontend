@@ -133,12 +133,11 @@ function SearchableDropdown({
         </div>
       );
     }
-    // FIX: Ensure value is not null for display
     return <span className="font-black text-[13px] truncate uppercase">{(!Array.isArray(value) && value) || placeholder}</span>;
   };
 
   return (
-    <div className="relative w-full h-full" ref={wrapperRef}>
+    <div className="relative w-full h-full" ref={wrapperRef} style={{ isolation: 'isolate' }}>
       <div 
         onClick={() => setIsOpen(!isOpen)}
         className="w-full h-full min-h-[45px] flex items-center justify-between font-mono text-slate-600 px-4 py-3 cursor-pointer group bg-transparent"
@@ -150,7 +149,7 @@ function SearchableDropdown({
       {isOpen && (
         <div 
           className="absolute top-full left-0 w-[320px] mt-1 bg-white border border-slate-300 rounded-lg shadow-2xl animate-in fade-in zoom-in duration-150" 
-          style={{ zIndex: 9999, overflow: 'hidden' }}
+          style={{ zIndex: 99999, overflow: 'hidden' }}
         >
           <div className="p-2 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
             <Search size={14} className="text-slate-400" />
@@ -221,7 +220,7 @@ function SortableSection({ id, title, children, hideDragHandle }: SectionProps) 
           <span className="text-[13px] font-black text-slate-100 uppercase tracking-[0.3em]">{title}</span>
         </div>
       </div>
-      <div className="p-8 bg-white rounded-b-lg">{children}</div>
+      <div className="p-8 bg-white rounded-b-lg" style={{ overflow: 'visible' }}>{children}</div>
     </div>
   );
 }
@@ -355,8 +354,10 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
       return !!r.is_impurities;
     });
 
+    const isAddDisabled = targetList.some(r => typeof r.id === 'string' && r.id.startsWith('temp-'));
+
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" style={{ overflow: 'visible' }}>
         {id === 'inci' && (
           <div className="flex justify-end items-center gap-4 px-2 mb-2">
             <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Assumed concentration</span>
@@ -366,9 +367,10 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
           </div>
         )}
 
-        <div className="border border-slate-300 rounded-xl shadow-xl bg-white overflow-visible">
-          <div className="overflow-x-auto no-scrollbar">
-            <table className="w-full text-left border-collapse table-fixed min-w-[800px]">
+        <div className="border border-slate-300 rounded-xl shadow-xl bg-white" style={{ overflow: 'visible' }}>
+          {/* CRITICAL FIX: Removed overflow-x-auto and used a min-height to allow dropdown to show */}
+          <div className="no-scrollbar" style={{ overflow: 'visible', minHeight: targetList.length > 0 ? 'auto' : '100px' }}>
+            <table className="w-full text-left border-collapse table-fixed min-w-[800px]" style={{ overflow: 'visible' }}>
               <thead className="bg-[#e2e8f0] border-b-2 border-slate-300">
                 <tr>
                   <th className="px-6 py-5 border-r border-white text-[11px] font-black uppercase">Ingredient</th>
@@ -381,20 +383,20 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
                   <th className="w-20 px-6 py-5"></th>
                 </tr>
               </thead>
-              <tbody className="text-[12px] font-bold divide-y divide-slate-100">
+              <tbody className="text-[12px] font-bold divide-y divide-slate-100" style={{ overflow: 'visible' }}>
                 {targetList.map((record, idx) => (
-                  <tr key={record.id || idx} className="border-l-[6px] border-l-blue-600 hover:bg-slate-50 transition-colors">
+                  <tr key={record.id || idx} className="border-l-[6px] border-l-blue-600 hover:bg-slate-50 transition-colors" style={{ overflow: 'visible' }}>
                     <td className="px-6 py-3 border-r border-slate-100 bg-slate-50/10 truncate">
                       {record.cas_description || <span className="text-slate-300 italic">Select CAS...</span>}
                     </td>
-                    <td className="relative p-0 border-r border-slate-100 overflow-visible">
+                    <td className="p-0 border-r border-slate-100" style={{ overflow: 'visible' }}>
                       <SearchableDropdown 
                         value={record.cas_num ?? ''}
                         options={casMasterList.map(c => ({ label: c.cas_num ?? '', subLabel: c.description ?? '', value: c.cas_num ?? '' }))}
                         onSelect={(val) => handleCasSelect(record.id!, val)}
                       />
                     </td>
-                    <td className="relative p-0 border-r border-slate-100 overflow-visible text-center">
+                    <td className="p-0 border-r border-slate-100 text-center" style={{ overflow: 'visible' }}>
                       {id === 'inci' ? (
                         <SearchableDropdown 
                           multiSelect
@@ -432,10 +434,28 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
               </tbody>
             </table>
           </div>
+          {/* Fallback for empty states to ensure enough height for dropdowns if needed */}
+          {targetList.length === 0 && (
+             <div className="h-20 flex items-center justify-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">No Records Defined</div>
+          )}
         </div>
-        <button onClick={() => handleAddRecord(id as any)} className="flex items-center gap-3 text-[#1a3a6c] text-[12px] font-black uppercase px-6 py-3.5 rounded-lg border-2 border-[#1a3a6c]/10 bg-white shadow-md active:scale-95 transition-all">
-          <Plus size={18} strokeWidth={4} /> Add {titles[id]}
-        </button>
+
+        <div className="group relative w-fit">
+          <button 
+            disabled={isAddDisabled}
+            onClick={() => handleAddRecord(id as any)} 
+            className={`flex items-center gap-3 text-[#1a3a6c] text-[12px] font-black uppercase px-6 py-3.5 rounded-lg border-2 border-[#1a3a6c]/10 bg-white shadow-md transition-all ${isAddDisabled ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400' : 'active:scale-95 hover:border-[#1a3a6c]/30'}`}
+          >
+            <Plus size={18} strokeWidth={4} /> Add Ingredient
+          </button>
+          
+          {isAddDisabled && (
+            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-64 bg-slate-800 text-white text-[10px] font-bold uppercase tracking-tighter p-2 rounded shadow-xl z-[10001]">
+              Please save or remove the pending row before adding another.
+              <div className="absolute top-full left-6 border-4 border-transparent border-t-slate-800"></div>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -443,7 +463,7 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
   const titles: Record<string, string> = { inci: 'INCI Ingredients', impurities: 'Impurities', allergens: 'Allergens' };
 
   return (
-    <div className="w-full">
+    <div className="w-full" style={{ overflow: 'visible' }}>
       <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mb-6">
         <button onClick={handleSaveAll} className={`px-6 py-3 rounded-xl font-black text-[12px] text-white uppercase tracking-widest shadow-lg transition-all active:scale-95 ${saveStatus === 'success' ? 'bg-emerald-500' : 'bg-blue-600'}`}>
           {isSaving ? <Loader2 className="animate-spin" /> : <Save size={18} className="inline mr-2" />}
@@ -485,7 +505,7 @@ export default function TechnicalSpecsTab({ selectedPart }: TechnicalSpecsTabPro
               </button>
             </div>
           </div>
-          <div className="max-w-[1920px] mx-auto p-4 md:p-12 space-y-10 pb-32">
+          <div className="max-w-[1920px] mx-auto p-4 md:p-12 space-y-10 pb-32" style={{ overflow: 'visible' }}>
             {items.map((id) => (
               <SortableSection key={`fs-${id}`} id={id} title={titles[id]} hideDragHandle>
                 {renderSectionContent(id)}
