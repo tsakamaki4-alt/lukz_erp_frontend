@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Plus, Trash2, Check, Maximize2, X, RefreshCw, AlertCircle, Save,
-  List, PieChart, Activity, Search, ChevronDown
+  List, PieChart, Activity, Search, ChevronDown, ExternalLink
 } from 'lucide-react';
 import { apiRequest } from '@/app/lib/api';
 
@@ -20,6 +20,7 @@ interface Ingredient {
   sg: number | string;
   unit_cost: number | string;
   formula_code?: string;
+  product_class?: string;
 }
 
 interface Result {
@@ -227,7 +228,8 @@ const GridContent = ({
   isLoading,
   saveProgress,
   pendingIngredients,
-  pendingResults
+  pendingResults,
+  onOpenItemDetail
 }: any) => {
   const [mobileTab, setMobileTab] = useState<'ingredients' | 'summary' | 'results'>('ingredients');
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
@@ -284,6 +286,7 @@ const GridContent = ({
           ) : (
             <div className="flex items-center gap-1">
               <span className="text-[9px] font-bold text-green-700 uppercase">Ready</span>
+              <span className="text-[9px] font-bold text-green-700 uppercase tracking-widest ml-2 italic underline decoration-green-300">Synchronized</span>
               <Check className="w-3 h-3 text-green-700" />
             </div>
           )}
@@ -605,7 +608,7 @@ const GridContent = ({
           </div>
           
           <div className="hidden lg:block h-32 md:h-40 overflow-auto bg-white">
-            <SummaryTable safeIngredients={safeIngredients} />
+            <SummaryTable safeIngredients={safeIngredients} onOpenItemDetail={onOpenItemDetail} />
           </div>
         </div>
 
@@ -615,7 +618,7 @@ const GridContent = ({
               Top Level Raw Material Summary
             </div>
             <div className="flex-1 overflow-auto bg-white">
-                <SummaryTable safeIngredients={safeIngredients} />
+                <SummaryTable safeIngredients={safeIngredients} onOpenItemDetail={onOpenItemDetail} />
             </div>
         </div>
 
@@ -754,34 +757,45 @@ const GridContent = ({
   );
 };
 
-const SummaryTable = ({ safeIngredients }: { safeIngredients: Ingredient[] }) => (
-  <table className="w-full text-[10px] border-collapse min-w-[800px]">
-    <thead className="bg-[#E5E7EB] sticky top-0 border-b border-slate-300">
-      <tr className="text-slate-700 font-bold uppercase">
-        <th className="p-1 border-r border-slate-300 text-left pl-2">Item Code</th>
-        <th className="p-1 border-r border-slate-300 text-left pl-2">Description</th>
-        <th className="p-1 border-r border-slate-300 text-right pr-2 w-20">% Weight</th>
-        <th className="p-1 border-r border-slate-300 text-left pl-2">Chemical Name</th>
-        <th className="p-1 border-r border-slate-300 text-left pl-2">CAS/EINECS/TSN</th>
-        <th className="p-1 border-r border-slate-300 text-left pl-2 w-24">Sub Class</th>
-        <th className="p-1 w-10 text-center">Is View</th>
-      </tr>
-    </thead>
-    <tbody className="divide-y divide-slate-100">
-        {safeIngredients.filter((i: Ingredient) => (i.line_type === '1' || i.line_type === 1) && i.code).map((item: Ingredient, idx: number) => (
-          <tr key={idx} className="hover:bg-orange-50/50">
-            <td className="p-1 pl-2 text-blue-600 font-mono underline">{item.code}</td>
-            <td className="p-1 pl-2 font-bold uppercase">{item.comment}</td>
-            <td className="p-1 pr-2 text-right font-mono font-bold text-orange-700">{Number(item.qty).toFixed(4)}</td>
-            <td className="p-1 pl-2 italic">-</td>
-            <td className="p-1 pl-2 text-slate-500">-</td>
-            <td className="p-1 pl-2">-</td>
-            <td className="p-1 text-center"><input type="checkbox" readOnly className="w-3 h-3" /></td>
-          </tr>
-        ))}
-    </tbody>
-  </table>
-);
+const SummaryTable = ({ safeIngredients, onOpenItemDetail }: { safeIngredients: Ingredient[], onOpenItemDetail: (item: Ingredient) => void }) => {
+  return (
+    <table className="w-full text-[10px] border-collapse min-w-[800px]">
+      <thead className="bg-[#E5E7EB] sticky top-0 border-b border-slate-300">
+        <tr className="text-slate-700 font-bold uppercase">
+          <th className="p-1 border-r border-slate-300 text-left pl-2">Item Code</th>
+          <th className="p-1 border-r border-slate-300 text-left pl-2">Description</th>
+          <th className="p-1 border-r border-slate-300 text-right pr-2 w-20">% Weight</th>
+          <th className="p-1 border-r border-slate-300 text-left pl-2">Chemical Name</th>
+          <th className="p-1 border-r border-slate-300 text-left pl-2">CAS/EINECS/TSN</th>
+          <th className="p-1 border-r border-slate-300 text-left pl-2 w-24">Sub Class</th>
+          <th className="p-1 w-10 text-center">Is View</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-slate-100">
+          {safeIngredients.filter((i: Ingredient) => (i.line_type === '1' || i.line_type === 1) && i.code).map((item: Ingredient, idx: number) => (
+            <tr key={idx} className="hover:bg-orange-50/50 group transition-colors">
+              <td className="p-1 pl-2">
+                <button 
+                  type="button"
+                  onClick={() => onOpenItemDetail(item)}
+                  className="text-blue-600 font-mono underline hover:text-blue-800 flex items-center gap-1 text-[11px] font-bold"
+                >
+                  {item.code}
+                  <ExternalLink size={10} className="opacity-0 group-hover:opacity-100" />
+                </button>
+              </td>
+              <td className="p-1 pl-2 font-bold uppercase">{item.comment}</td>
+              <td className="p-1 pr-2 text-right font-mono font-bold text-orange-700">{Number(item.qty).toFixed(4)}</td>
+              <td className="p-1 pl-2 italic">-</td>
+              <td className="p-1 pl-2 text-slate-500">-</td>
+              <td className="p-1 pl-2">-</td>
+              <td className="p-1 text-center"><input type="checkbox" readOnly className="w-3 h-3" /></td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  );
+};
 
 export default function FormulaIngredients({ ingredients = [], setIngredients, isDataLocked, formData }: any) {
   const [results, setResults] = useState<Result[]>([]);
@@ -794,6 +808,10 @@ export default function FormulaIngredients({ ingredients = [], setIngredients, i
   const [saveProgress, setSaveProgress] = useState(0);
   const [pendingIngredients, setPendingIngredients] = useState(false);
   const [pendingResults, setPendingResults] = useState(false);
+
+  // Modal Detail States
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [detailUrl, setDetailUrl] = useState("");
   
   // Footer Editable States
   const [manualYield, setManualYield] = useState<string | number>("100.0000");
@@ -903,7 +921,8 @@ export default function FormulaIngredients({ ingredients = [], setIngredients, i
         sg: part.specific_gravity || 1.0,
         unit_cost: part.unit_cost || 0,
         uom: part.uom || '3',
-        uom_desc: part.uom_desc || part.uom || '%'
+        uom_desc: part.uom_desc || part.uom || '%',
+        product_class: part.product_class
       };
       return updated;
     });
@@ -964,6 +983,15 @@ export default function FormulaIngredients({ ingredients = [], setIngredients, i
   const toggleRow = (idx: number) => setSelectedRows(p => p.includes(idx) ? p.filter(i => i !== idx) : [...p, idx]);
   const toggleResultRow = (idx: number) => setSelectedResultRows(p => p.includes(idx) ? p.filter(i => i !== idx) : [...p, idx]);
 
+  // Modal Item Click Handler
+  const handleOpenItemDetail = (item: Ingredient) => {
+    const isPackaging = item.product_class === 'Packaging';
+    const baseDir = isPackaging ? 'packaging' : 'raw_materials';
+    const url = `/parts/${baseDir}?search=${encodeURIComponent(item.code)}`;
+    setDetailUrl(url);
+    setIsDetailModalOpen(true);
+  };
+
   // CALCULATION LOGIC
   const totalWeight = useMemo(() => {
     let hasQS = false;
@@ -1021,7 +1049,6 @@ export default function FormulaIngredients({ ingredients = [], setIngredients, i
   const netTotalCalculated = useMemo(() => {
     const manualNetNum = Number(manualNet) || 0;
     if (manualNetNum === 0) return "0.0000";
-    // MATH: (Total Unit Cost) / (Manual Net / 100) formatted to 4 decimals
     return (Number(totalUnitCost) / (manualNetNum / 100)).toFixed(4);
   }, [totalUnitCost, manualNet]);
 
@@ -1036,12 +1063,15 @@ export default function FormulaIngredients({ ingredients = [], setIngredients, i
     totalWeight, totalSGValue, totalUnitCost, totalCost100Gal, 
     manualYield, setManualYield, manualNet, setManualNet, netTotal: netTotalCalculated, sgOverride, setSgOverride, lbGalOverride, setLbGalOverride,
     theoreticalSG: theoreticalSGVal, theoreticalLbGal: theoreticalLbGalVal,
-    setIsModalOpen, isLoading, saveProgress, pendingIngredients, pendingResults
+    setIsModalOpen, isLoading, saveProgress, pendingIngredients, pendingResults,
+    onOpenItemDetail: handleOpenItemDetail
   };
 
   return (
     <>
       <GridContent {...gridProps} />
+      
+      {/* Maximize Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center">
           <div className="bg-[#E5E7EB] w-full h-full rounded-lg shadow-2xl flex flex-col relative overflow-hidden">
@@ -1052,6 +1082,30 @@ export default function FormulaIngredients({ ingredients = [], setIngredients, i
           </div>
         </div>
       )}
+
+      {/* Item Detail Modal */}
+      {isDetailModalOpen && (
+        <div className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center">
+          <div className="bg-[#E5E7EB] w-full h-full rounded-lg shadow-2xl flex flex-col relative overflow-hidden">
+            <div className="bg-[#B0B5BC] p-2 flex justify-between items-center border-b border-slate-400">
+              <span className="text-[11px] font-black uppercase text-slate-800 ml-4">Item View Mode</span>
+              <button 
+                onClick={() => setIsDetailModalOpen(false)} 
+                className="p-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
+              >
+                <X className="w-4 h-4" /> Close View
+              </button>
+            </div>
+            <div className="flex-1 bg-white">
+              <iframe 
+                src={detailUrl} 
+                className="w-full h-full border-none"
+                title="Item Detail"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
-} 
+}

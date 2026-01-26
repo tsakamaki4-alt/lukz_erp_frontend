@@ -70,8 +70,8 @@ export default function Sidebar({ isOpen, setIsOpen, onNavigate }: SidebarProps)
           icon: Package,
           color: 'text-amber-400',
           sub: [
-            { title: 'Raw Materials', path: '/raw_materials' },
-            { title: 'Packaging', path: '/packaging' }
+            { title: 'Raw Materials', path: '/parts/raw_materials' },
+            { title: 'Packaging', path: '/parts/packaging' }
           ]    
         },
       ]
